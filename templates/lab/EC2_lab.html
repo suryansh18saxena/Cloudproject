@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cloud Learning Platform - Lab Instructions</title>
+    <style>
+        /* General Styles */
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: #F9FAFB;
+            margin: 0;
+            padding: 20px;
+            color: #1F2937;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+        }
+
+        /* Lab Instructions Panel Container */
+        .lab-instructions-panel {
+            background-color: #FFFFFF;
+            border-radius: 12px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+            width: 100%;
+            max-width: 600px;
+            padding: 30px;
+            overflow: hidden;
+            border: 1px solid #E5E7EB;
+        }
+
+        /* 1. Header Section */
+        .lab-header {
+            margin-bottom: 25px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #E5E7EB;
+        }
+        .lab-title {
+            font-size: 24px;
+            font-weight: 700;
+            margin: 0 0 8px 0;
+            color: #111827;
+        }
+        .lab-description {
+            font-size: 16px;
+            color: #4B5563;
+            margin: 0;
+            line-height: 1.5;
+        }
+
+        /* 2. Lab Objective & 3. Lab Rules */
+        .lab-section {
+            margin-bottom: 25px;
+        }
+        .section-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin: 0 0 10px 0;
+            color: #1F2937;
+        }
+        .section-content {
+            font-size: 15px;
+            line-height: 1.6;
+            color: #374151;
+            margin: 0;
+        }
+        .rules-list {
+            list-style-type: disc;
+            margin: 0;
+            padding-left: 20px;
+        }
+        .rules-list li {
+            margin-bottom: 6px;
+        }
+
+        /* 4. Step-by-Step Instructions (Accordion) */
+        .steps-container {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .step-card {
+            border: 1px solid #E5E7EB;
+            border-radius: 10px;
+            overflow: hidden;
+            transition: border-color 0.3s ease, background-color 0.3s ease;
+        }
+
+        .step-card:not(.active) {
+            cursor: pointer;
+        }
+
+        .step-card.active {
+            border-color: #93C5FD;
+            background-color: #EFF6FF;
+        }
+
+        .step-header {
+            padding: 18px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .step-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .step-number {
+            font-size: 14px;
+            font-weight: 600;
+            color: #FFFFFF;
+            background-color: #D1D5DB;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: background-color 0.3s ease;
+        }
+        .active .step-number {
+            background-color: #2563EB;
+        }
+
+        .step-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #374151;
+            margin: 0;
+            transition: color 0.3s ease;
+        }
+        .active .step-title {
+            color: #1E40AF;
+        }
+
+        .expand-icon {
+            font-size: 18px;
+            color: #6B7280;
+            transition: transform 0.3s ease, color 0.3s ease;
+        }
+        .active .expand-icon {
+            transform: rotate(180deg);
+            color: #2563EB;
+        }
+
+        .step-body {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.4s ease, padding 0.4s ease;
+            padding: 0 20px;
+        }
+
+        .active .step-body {
+            max-height: 500px; /* Large enough to fit content */
+            padding-bottom: 20px;
+        }
+
+        .step-description {
+            font-size: 15px;
+            line-height: 1.6;
+            color: #4B5563;
+            margin: 0;
+        }
+        .step-hint {
+            font-size: 14px;
+            color: #9CA3AF;
+            margin: 10px 0 0 0;
+        }
+
+        /* 5. Progress Indicator */
+        .progress-wrapper {
+            margin-bottom: 25px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .progress-text {
+            font-size: 14px;
+            font-weight: 500;
+            color: #6B7280;
+        }
+        .progress-container {
+            height: 8px;
+            background-color: #E5E7EB;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        .progress-bar {
+            height: 100%;
+            background-color: #3B82F6;
+            width: 25%; /* Set based on active step */
+            transition: width 0.4s ease;
+            border-radius: 4px;
+        }
+
+        /* 6. Action Buttons */
+        .button-group {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 15px;
+            margin-top: 10px;
+        }
+
+        .btn {
+            border-radius: 30px;
+            padding: 12px 24px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+            transition: box-shadow 0.3s ease, transform 0.1s ease;
+            outline: none;
+            display: inline-flex;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+
+        .btn:hover {
+            box-shadow: 0 4px 8px rgba(37, 99, 235, 0.2);
+        }
+
+        .btn:active {
+            transform: translateY(1px);
+        }
+
+        .btn-primary {
+            background: linear-gradient(to right, #2563EB, #60A5FA);
+            color: #FFFFFF;
+            width: 100%; /* Make it large and prominent */
+            box-shadow: 0 2px 5px rgba(37, 99, 235, 0.2);
+        }
+        .btn-primary:hover {
+            background: linear-gradient(to right, #1E40AF, #3B82F6);
+        }
+
+        .btn-secondary {
+            background-color: #EFF6FF;
+            color: #2563EB;
+            border: 1px solid #DBEAFE;
+            padding: 12px 20px;
+        }
+        .btn-secondary:hover {
+            background-color: #DBEAFE;
+            box-shadow: none;
+        }
+
+    </style>
+</head>
+<body>
+    <div class="lab-instructions-panel">
+        <header class="lab-header">
+            <h1 class="lab-title">EC2 Instance Launch Lab</h1>
+            <p class="lab-description">Learn how to launch and configure an EC2 instance with proper security settings.</p>
+        </header>
+
+        <section class="lab-section">
+            <h2 class="section-title">Objective</h2>
+            <p class="section-content">By the end of this lab, you will be able to launch an EC2 instance in a specified region, configure a security group to allow inbound SSH access, assign the correct IAM role, and verify that the instance is running correctly. This is a fundamental skill for cloud computing on AWS.</p>
+        </section>
+
+        <section class="lab-section">
+            <h2 class="section-title">Rules</h2>
+            <div class="section-content">
+                <ul class="rules-list">
+                    <li>Use only the provided environment and credentials.</li>
+                    <li>Do not create any extra resources not specified in the instructions.</li>
+                    <li>The lab environment will automatically expire after the time limit (60 minutes).</li>
+                </ul>
+            </div>
+        </section>
+
+        <section class="lab-section">
+            <h2 class="section-title">Instructions</h2>
+            <div class="steps-container">
+                <article class="step-card active" id="step-1">
+                    <header class="step-header">
+                        <div class="step-info">
+                            <span class="step-number">1</span>
+                            <h3 class="step-title">Launch EC2 Instance</h3>
+                        </div>
+                        <span class="expand-icon">▼</span>
+                    </header>
+                    <div class="step-body">
+                        <p class="step-description">Navigate to the EC2 service in the AWS Console. Click 'Launch instances' and enter a name. Select 'Amazon Linux 2' for the AMI and set the instance type to <span style="font-family: monospace;">t2.micro</span>. Ensure the default VPC and a public subnet are selected.</p>
+                        <p class="step-hint">Remember to select the specific key pair provided in the 'Connect to your environment' section.</p>
+                    </div>
+                </article>
+
+                <article class="step-card" id="step-2">
+                    <header class="step-header">
+                        <div class="step-info">
+                            <span class="step-number">2</span>
+                            <h3 class="step-title">Configure Security Group</h3>
+                        </div>
+                        <span class="expand-icon">▼</span>
+                    </header>
+                    <div class="step-body">
+                        <p class="step-description">In the Network settings section during the instance launch process, create a new security group. Add a single inbound rule to allow SSH traffic (port 22) with the source set to 'My IP'. Give the security group a descriptive name like 'ssh-access'.</p>
+                    </div>
+                </article>
+
+                <article class="step-card" id="step-3">
+                    <header class="step-header">
+                        <div class="step-info">
+                            <span class="step-number">3</span>
+                            <h3 class="step-title">Attach IAM Role</h3>
+                        </div>
+                        <span class="expand-icon">▼</span>
+                    </header>
+                    <div class="step-body">
+                        <p class="step-description">Expand the 'Advanced details' section. In the 'IAM instance profile' dropdown, select the IAM role provided for this lab. This role has the necessary permissions for the instance to communicate with other services.</p>
+                    </div>
+                </article>
+
+                <article class="step-card" id="step-4">
+                    <header class="step-header">
+                        <div class="step-info">
+                            <span class="step-number">4</span>
+                            <h3 class="step-title">Verify Instance</h3>
+                        </div>
+                        <span class="expand-icon">▼</span>
+                    </header>
+                    <div class="step-body">
+                        <p class="step-description">Click 'Launch instance' to start the process. Once the instance creation is initiated, navigate back to the EC2 instances list. Wait a few moments and ensure that your new instance's status is <span style="font-family: monospace; color: #16A34A; font-weight: 500;">running</span>.</p>
+                    </div>
+                </article>
+            </div>
+        </section>
+
+        <div class="progress-wrapper">
+            <span class="progress-text">Step 1 of 4</span>
+            <div class="progress-container">
+                <div class="progress-bar"></div>
+            </div>
+        </div>
+
+        <div class="button-group">
+            <button class="btn btn-primary">Start Lab</button>
+            <button class="btn btn-secondary">View Hint</button>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const stepCards = document.querySelectorAll('.step-card');
+            const progressText = document.querySelector('.progress-text');
+            const progressBar = document.querySelector('.progress-bar');
+            const totalSteps = stepCards.length;
+
+            stepCards.forEach((card, index) => {
+                const header = card.querySelector('.step-header');
+                header.addEventListener('click', () => {
+                    // Close all cards
+                    stepCards.forEach(c => c.classList.remove('active'));
+
+                    // Open the clicked card
+                    card.classList.add('active');
+
+                    // Update progress
+                    const currentStep = index + 1;
+                    progressText.textContent = `Step ${currentStep} of ${totalSteps}`;
+                    progressBar.style.width = `${(currentStep / totalSteps) * 100}%`;
+                });
+            });
+        });
+    </script>
+</body>
+</html>
