@@ -1226,21 +1226,21 @@
     </div>
     <nav class="sidebar-nav">
       <div class="nav-label">Main</div>
-      <a class="nav-item active" href="#"><span class="material-symbols-outlined">dashboard</span>Dashboard</a>
-      <a class="nav-item" href="#"><span class="material-symbols-outlined">science</span>Labs<span class="nav-badge"
-          style="background:rgba(125,211,252,0.1);color:var(--primary)">12</span></a>
+      <a class="nav-item active" href="{% url 'dashboard' %}"><span class="material-symbols-outlined">dashboard</span>Dashboard</a>
+      <a class="nav-item" href="{% url 'EC2_Lab' %}"><span class="material-symbols-outlined">science</span>Labs<span class="nav-badge"
+          style="background:rgba(125,211,252,0.1);color:var(--primary)">{{ available_labs|length }}</span></a>
       <a class="nav-item" href="#"><span class="material-symbols-outlined">trending_up</span>My Progress</a>
       <a class="nav-item" href="#"><span class="material-symbols-outlined">analytics</span>Analytics</a>
       <div class="nav-label" style="margin-top:1.5rem">Account</div>
       <a class="nav-item" href="#"><span class="material-symbols-outlined">settings</span>Settings</a>
-      <a class="nav-item" href="#"><span class="material-symbols-outlined">help</span>Help Center</a>
+      <a class="nav-item" href="{% url 'logout' %}"><span class="material-symbols-outlined">logout</span>Logout</a>
     </nav>
     <div class="sidebar-footer">
       <div class="user-info">
-        <div class="user-avatar">S</div>
+        <div class="user-avatar">{{ profile.initials }}</div>
         <div>
-          <div class="user-name">Sarah Chen</div>
-          <div class="user-role">Pro Member</div>
+          <div class="user-name">{{ user.get_full_name|default:user.username }}</div>
+          <div class="user-role">Cloud Learner</div>
         </div>
       </div>
     </div>
@@ -1261,9 +1261,8 @@
         <div class="badge"></div>
       </div>
       <div class="action-btn"><span class="material-symbols-outlined">dark_mode</span></div>
-      <div class="avatar-btn">
-        <img alt="Sarah Chen"
-          src="https://lh3.googleusercontent.com/aida-public/AB6AXuCsUePCIRcsrupifgnfjCC82clwugcifZRK_3QEUgxZIsgn0vJ5Wdq2a0uhZ3Dt16QM_LYQHxejhq8FCSKvbQQMY7TJw_eGv104Mi0iHpzTtOSqlCuL0Rlud4KtEvZ2gAGyJKvQmVf_3Zv7f7TZ_ZxojmB34ymBncFnVQslLZGN_TbFjg6jpOjo6VP5uKkdDOSRHqx6SR657LjU_QrPwV13JAWDHRPjQmnvPecXiRrMpQd8XE8NlbjGXhYAKyhqbyqnGBDHsRoGaqVr" />
+      <div class="avatar-btn" style="display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,var(--primary),var(--accent));color:var(--bg);font-weight:700;font-size:.85rem">
+        {{ profile.initials }}
       </div>
     </div>
   </header>
@@ -1274,23 +1273,23 @@
 
       <!-- WELCOME BANNER -->
       <div class="welcome fade-in">
-        <h1>Welcome back, <span class="gradient">Sarah</span> 👋</h1>
-        <p>Continue your cloud learning journey — you're on a roll!</p>
+        <h1>Welcome back, <span class="gradient">{{ user.first_name|default:user.username }}</span> 👋</h1>
+        <p>Continue your cloud learning journey{% if current_streak > 0 %} — you're on a {{ current_streak }} day streak!{% endif %}</p>
         <div class="welcome-meta">
-          <div class="meta-item"><i class="fas fa-fire" style="color:var(--amber)"></i> 5 day streak</div>
-          <div class="meta-item"><i class="fas fa-bolt" style="color:var(--primary)"></i> 3 labs this week</div>
-          <div class="meta-item"><i class="fas fa-trophy" style="color:var(--accent)"></i> Top 15% learner</div>
+          <div class="meta-item"><i class="fas fa-fire" style="color:var(--amber)"></i> {{ current_streak }} day streak</div>
+          <div class="meta-item"><i class="fas fa-bolt" style="color:var(--primary)"></i> {{ completed_count }} labs completed</div>
+          <div class="meta-item"><i class="fas fa-trophy" style="color:var(--accent)"></i> {{ avg_score }}% avg score</div>
         </div>
       </div>
 
       <!-- STATS GRID -->
       <div class="stats-grid">
         <div class="stat-card fade-in">
-          <div class="stat-header"><span class="stat-label">Total Labs</span>
+          <div class="stat-header"><span class="stat-label">Labs Completed</span>
             <div class="stat-icon blue"><span class="material-symbols-outlined">inventory_2</span></div>
           </div>
-          <div class="stat-value">12</div>
-          <div class="stat-change up"><i class="fas fa-arrow-up" style="font-size:.55rem"></i> +3 this month</div>
+          <div class="stat-value">{{ completed_count }}</div>
+          <div class="stat-change up"><i class="fas fa-check" style="font-size:.55rem"></i> Total completed</div>
         </div>
         <div class="stat-card fade-in">
           <div class="stat-header"><span class="stat-label">Avg Score</span>
@@ -1298,50 +1297,57 @@
           </div>
           <div class="stat-value"
             style="background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent">
-            88%</div>
-          <div class="stat-change up"><i class="fas fa-arrow-up" style="font-size:.55rem"></i> +5% from last week</div>
+            {{ avg_score }}%</div>
+          <div class="stat-change up"><i class="fas fa-chart-line" style="font-size:.55rem"></i> Overall average</div>
         </div>
         <div class="stat-card fade-in">
-          <div class="stat-header"><span class="stat-label">Active Sessions</span>
-            <div class="stat-icon green"><span class="material-symbols-outlined">pulse_alert</span></div>
+          <div class="stat-header"><span class="stat-label">Total Hours</span>
+            <div class="stat-icon green"><span class="material-symbols-outlined">schedule</span></div>
           </div>
-          <div class="stat-value" style="color:var(--green)">1</div>
-          <div class="stat-change up"><i class="fas fa-circle" style="font-size:.4rem"></i> Running now</div>
+          <div class="stat-value" style="color:var(--green)">{{ total_hours }}</div>
+          <div class="stat-change up"><i class="fas fa-clock" style="font-size:.4rem"></i> Hours practiced</div>
         </div>
         <div class="stat-card fade-in">
-          <div class="stat-header"><span class="stat-label">Weak Area</span>
-            <div class="stat-icon red"><span class="material-symbols-outlined">hub</span></div>
+          <div class="stat-header"><span class="stat-label">Streak</span>
+            <div class="stat-icon red"><span class="material-symbols-outlined">local_fire_department</span></div>
           </div>
-          <div class="stat-value" style="color:var(--red);font-size:1.3rem;line-height:2">Networking</div>
-          <div class="stat-change down"><i class="fas fa-arrow-down" style="font-size:.55rem"></i> Needs improvement
+          <div class="stat-value" style="color:var(--amber)">{{ current_streak }}</div>
+          <div class="stat-change up"><i class="fas fa-fire" style="font-size:.55rem"></i> Day streak
           </div>
         </div>
       </div>
 
       <!-- ACTIVE LAB -->
+      {% if active_session %}
       <div class="active-lab fade-in">
         <div class="lab-status live">
           <div class="pulse"></div> In Progress
         </div>
-        <h3>Kubernetes Lab: Cluster Management</h3>
+        <h3>{{ active_session.lab.title }}</h3>
         <div class="lab-details">
-          <span><span class="material-symbols-outlined" style="font-size:.9rem">schedule</span> 25m remaining</span>
-          <span><span class="material-symbols-outlined" style="font-size:.9rem">layers</span> Intermediate</span>
-          <span><span class="material-symbols-outlined" style="font-size:.9rem">star</span> 4.9 rating</span>
+          <span><span class="material-symbols-outlined" style="font-size:.9rem">schedule</span> <span id="dashboard-timer">{{ active_session.remaining_seconds }}</span>s remaining</span>
+          <span><span class="material-symbols-outlined" style="font-size:.9rem">layers</span> {{ active_session.lab.get_difficulty_display }}</span>
+          <span><span class="material-symbols-outlined" style="font-size:.9rem">timer</span> {{ active_session.lab.duration_minutes }}m total</span>
         </div>
         <div class="progress-container">
-          <div class="progress-header"><span style="font-weight:600">Current Progress</span><span
-              style="color:var(--primary);font-weight:700">65%</span></div>
+          <div class="progress-header"><span style="font-weight:600">Lab Active</span><span
+              style="color:var(--primary);font-weight:700">{{ active_session.get_status_display }}</span></div>
           <div class="progress-track">
             <div class="progress-fill" id="active-progress" style="width:0%"></div>
           </div>
         </div>
         <div class="lab-actions">
-          <button class="btn-resume"><span class="material-symbols-outlined" style="font-size:1rem">play_arrow</span>
-            Resume Lab</button>
-          <button class="btn-outline">View Details</button>
+          <a href="{% url 'EC2_Lab' %}" style="text-decoration:none"><button class="btn-resume"><span class="material-symbols-outlined" style="font-size:1rem">play_arrow</span>
+            Resume Lab</button></a>
         </div>
       </div>
+      {% else %}
+      <div class="active-lab fade-in" style="text-align:center;padding:2.5rem">
+        <span class="material-symbols-outlined" style="font-size:3rem;color:var(--text-muted);margin-bottom:1rem">science</span>
+        <h3 style="color:var(--text-dim)">No Active Lab</h3>
+        <p style="color:var(--text-muted);font-size:.9rem;margin-top:.5rem">Start a lab from the available labs below to begin learning!</p>
+      </div>
+      {% endif %}
 
       <!-- DASHBOARD GRID -->
       <div class="dashboard-grid">
@@ -1352,36 +1358,23 @@
             <a class="view-all" href="#">View All →</a>
           </div>
           <div class="labs-grid">
+            {% for lab in available_labs %}
             <div class="lab-card fade-in">
               <div>
-                <div class="lab-badge beginner">Beginner</div>
-                <h4>EC2 Basics</h4>
-                <p>Spin up your first virtual server instance and configure security groups.</p>
+                <div class="lab-badge {{ lab.difficulty }}">{{ lab.get_difficulty_display }}</div>
+                <h4>{{ lab.title }}</h4>
+                <p>{{ lab.description|truncatewords:15 }}</p>
               </div>
+              <a href="{% url 'EC2_Lab' %}" style="text-decoration:none">
               <div class="lab-card-footer"><span class="lab-time"><span class="material-symbols-outlined"
-                    style="font-size:.85rem">timer</span> 45m</span><button class="lab-start-btn">Start Lab</button>
-              </div>
+                    style="font-size:.85rem">timer</span> {{ lab.duration_minutes }}m</span><button class="lab-start-btn">Start Lab</button>
+              </div></a>
             </div>
-            <div class="lab-card fade-in">
-              <div>
-                <div class="lab-badge intermediate">Intermediate</div>
-                <h4>IAM Foundations</h4>
-                <p>Master identity and access management policies for secure infrastructure.</p>
-              </div>
-              <div class="lab-card-footer"><span class="lab-time"><span class="material-symbols-outlined"
-                    style="font-size:.85rem">timer</span> 60m</span><button class="lab-start-btn">Start Lab</button>
-              </div>
+            {% empty %}
+            <div class="lab-card fade-in" style="text-align:center;padding:2rem">
+              <p style="color:var(--text-muted)">No labs available yet. Check back soon!</p>
             </div>
-            <div class="lab-card fade-in">
-              <div>
-                <div class="lab-badge beginner">Beginner</div>
-                <h4>S3 Storage</h4>
-                <p>Object storage, lifecycle rules, and bucket configurations.</p>
-              </div>
-              <div class="lab-card-footer"><span class="lab-time"><span class="material-symbols-outlined"
-                    style="font-size:.85rem">timer</span> 30m</span><button class="lab-start-btn">Start Lab</button>
-              </div>
-            </div>
+            {% endfor %}
           </div>
         </div>
 
@@ -1390,16 +1383,16 @@
           <!-- STREAK -->
           <div class="streak-card fade-in">
             <div class="streak-emoji">🔥</div>
-            <div class="streak-count">5 Days</div>
+            <div class="streak-count">{{ current_streak }} Day{{ current_streak|pluralize }}</div>
             <div class="streak-label">Current Learning Streak</div>
             <div class="streak-days">
-              <div class="streak-day active">M</div>
-              <div class="streak-day active">T</div>
-              <div class="streak-day active">W</div>
-              <div class="streak-day active">T</div>
-              <div class="streak-day today active">F</div>
-              <div class="streak-day">S</div>
-              <div class="streak-day">S</div>
+              <div class="streak-day{% if current_streak >= 7 %} active{% endif %}">M</div>
+              <div class="streak-day{% if current_streak >= 6 %} active{% endif %}">T</div>
+              <div class="streak-day{% if current_streak >= 5 %} active{% endif %}">W</div>
+              <div class="streak-day{% if current_streak >= 4 %} active{% endif %}">T</div>
+              <div class="streak-day{% if current_streak >= 3 %} active{% endif %}">F</div>
+              <div class="streak-day{% if current_streak >= 2 %} active{% endif %}">S</div>
+              <div class="streak-day{% if current_streak >= 1 %} active{% endif %}">S</div>
             </div>
           </div>
 
@@ -1465,39 +1458,29 @@
                 <h2>Recent Activity</h2>
               </div>
             </div>
+            {% for activity in recent_activities %}
             <div class="activity-item">
               <div class="activity-left">
-                <div class="activity-icon completed"><span class="material-symbols-outlined"
-                    style="font-size:1rem">check_circle</span></div>
+                <div class="activity-icon {% if activity.is_passed %}completed{% else %}failed{% endif %}"><span class="material-symbols-outlined"
+                    style="font-size:1rem">{% if activity.is_passed %}check_circle{% else %}cancel{% endif %}</span></div>
                 <div>
-                  <div class="activity-name">VPC Routing</div>
-                  <div class="activity-date">2 days ago</div>
+                  <div class="activity-name">{{ activity.task_name }}</div>
+                  <div class="activity-date">{{ activity.checked_at|timesince }} ago</div>
                 </div>
               </div>
-              <div class="activity-score pass">85% ✓</div>
+              <div class="activity-score {% if activity.is_passed %}pass{% else %}fail{% endif %}">{% if activity.is_passed %}✓ Pass{% else %}✗ Fail{% endif %}</div>
             </div>
+            {% empty %}
             <div class="activity-item">
               <div class="activity-left">
-                <div class="activity-icon completed"><span class="material-symbols-outlined"
-                    style="font-size:1rem">check_circle</span></div>
+                <div class="activity-icon" style="background:rgba(125,211,252,0.1);color:var(--primary)"><span class="material-symbols-outlined" style="font-size:1rem">info</span></div>
                 <div>
-                  <div class="activity-name">EC2 Auto Scaling</div>
-                  <div class="activity-date">4 days ago</div>
+                  <div class="activity-name">No activity yet</div>
+                  <div class="activity-date">Start a lab to see your activity here</div>
                 </div>
               </div>
-              <div class="activity-score pass">92% ✓</div>
             </div>
-            <div class="activity-item">
-              <div class="activity-left">
-                <div class="activity-icon failed"><span class="material-symbols-outlined"
-                    style="font-size:1rem">cancel</span></div>
-                <div>
-                  <div class="activity-name">IAM Roles</div>
-                  <div class="activity-date">1 week ago</div>
-                </div>
-              </div>
-              <div class="activity-score fail">40% ✗</div>
-            </div>
+            {% endfor %}
           </div>
         </div>
       </div>
