@@ -3,294 +3,220 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cloud Learning Platform - Lab Instructions</title>
+    <title>CloudLabX — EC2 Instance Launch Lab</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
     <style>
-        /* General Styles */
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-            background-color: #F9FAFB;
-            margin: 0;
-            padding: 20px;
-            color: #1F2937;
-            display: flex;
-            justify-content: center;
-            align-items: flex-start;
-            min-height: 100vh;
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --bg: #06080f; --bg2: #0b1120; --surface: #111827; --surface2: #1a2438;
+            --primary: #7dd3fc; --primary-dim: #38bdf8; --primary-glow: rgba(125,211,252,0.15);
+            --accent: #c084fc; --accent2: #f472b6; --text: #e2e8f0;
+            --text-dim: #94a3b8; --text-muted: #64748b;
+            --border: rgba(125,211,252,0.08); --border-hover: rgba(125,211,252,0.2);
+            --glass2: rgba(26,36,56,0.65); --green: #22c55e; --red: #ef4444; --amber: #f59e0b;
+        }
+        body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; padding: 2rem; display: flex; justify-content: center; }
+        ::selection { background: var(--primary); color: var(--bg); }
+
+        /* Layout */
+        .lab-layout { display: grid; grid-template-columns: 1fr 380px; gap: 2rem; max-width: 1200px; width: 100%; align-items: start; }
+
+        /* Left panel - Instructions */
+        .lab-panel {
+            background: var(--glass2); backdrop-filter: blur(15px); border: 1px solid var(--border);
+            border-radius: 20px; padding: 2rem; position: sticky; top: 2rem;
         }
 
-        /* Lab Instructions Panel Container */
-        .lab-instructions-panel {
-            background-color: #FFFFFF;
-            border-radius: 12px;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
-            width: 100%;
-            max-width: 600px;
-            padding: 30px;
-            overflow: hidden;
-            border: 1px solid #E5E7EB;
+        /* Right panel - Controls */
+        .control-panel {
+            display: flex; flex-direction: column; gap: 1.5rem; position: sticky; top: 2rem;
         }
 
-        /* 1. Header Section */
-        .lab-header {
-            margin-bottom: 25px;
-            padding-bottom: 20px;
-            border-bottom: 1px solid #E5E7EB;
-        }
-        .lab-title {
-            font-size: 24px;
-            font-weight: 700;
-            margin: 0 0 8px 0;
-            color: #111827;
-        }
-        .lab-description {
-            font-size: 16px;
-            color: #4B5563;
-            margin: 0;
-            line-height: 1.5;
+        .control-card {
+            background: var(--glass2); backdrop-filter: blur(15px); border: 1px solid var(--border);
+            border-radius: 16px; padding: 1.5rem;
         }
 
-        /* 2. Lab Objective & 3. Lab Rules */
-        .lab-section {
-            margin-bottom: 25px;
-        }
-        .section-title {
-            font-size: 18px;
-            font-weight: 600;
-            margin: 0 0 10px 0;
-            color: #1F2937;
-        }
-        .section-content {
-            font-size: 15px;
-            line-height: 1.6;
-            color: #374151;
-            margin: 0;
-        }
-        .rules-list {
-            list-style-type: disc;
-            margin: 0;
-            padding-left: 20px;
-        }
-        .rules-list li {
-            margin-bottom: 6px;
-        }
+        /* Back link */
+        .back-link { display: inline-flex; align-items: center; gap: .5rem; color: var(--text-dim); font-size: .85rem; font-weight: 600; text-decoration: none; margin-bottom: 1.5rem; transition: color .3s; }
+        .back-link:hover { color: var(--primary); }
 
-        /* 4. Step-by-Step Instructions (Accordion) */
-        .steps-container {
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-            margin-bottom: 25px;
-        }
+        /* Header */
+        .lab-header { margin-bottom: 1.5rem; padding-bottom: 1.5rem; border-bottom: 1px solid var(--border); }
+        .lab-title { font-size: 1.5rem; font-weight: 800; letter-spacing: -.5px; margin-bottom: .3rem; }
+        .lab-desc { font-size: .9rem; color: var(--text-dim); line-height: 1.6; }
 
-        .step-card {
-            border: 1px solid #E5E7EB;
-            border-radius: 10px;
-            overflow: hidden;
-            transition: border-color 0.3s ease, background-color 0.3s ease;
-        }
+        /* Sections */
+        .section-title { font-size: 1rem; font-weight: 700; margin-bottom: .75rem; display: flex; align-items: center; gap: .5rem; }
+        .section-title .material-symbols-outlined { font-size: 1.1rem; color: var(--primary); }
+        .section-content { font-size: .88rem; color: var(--text-dim); line-height: 1.7; margin-bottom: 1.5rem; }
+        .rules-list { list-style: none; padding: 0; margin-bottom: 1.5rem; }
+        .rules-list li { font-size: .85rem; color: var(--text-dim); padding: .4rem 0; display: flex; align-items: flex-start; gap: .5rem; }
+        .rules-list li::before { content: '•'; color: var(--primary); font-weight: 700; }
 
-        .step-card:not(.active) {
-            cursor: pointer;
-        }
-
-        .step-card.active {
-            border-color: #93C5FD;
-            background-color: #EFF6FF;
-        }
-
-        .step-header {
-            padding: 18px 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .step-info {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
+        /* Steps */
+        .steps-container { display: flex; flex-direction: column; gap: .75rem; margin-bottom: 1.5rem; }
+        .step-card { border: 1px solid var(--border); border-radius: 12px; overflow: hidden; transition: all .3s; cursor: pointer; }
+        .step-card.active { border-color: rgba(125,211,252,0.2); background: rgba(125,211,252,0.03); }
+        .step-header { padding: 1rem 1.2rem; display: flex; justify-content: space-between; align-items: center; }
+        .step-info { display: flex; align-items: center; gap: .75rem; }
         .step-number {
-            font-size: 14px;
-            font-weight: 600;
-            color: #FFFFFF;
-            background-color: #D1D5DB;
-            width: 28px;
-            height: 28px;
-            border-radius: 50%;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            transition: background-color 0.3s ease;
+            font-size: .75rem; font-weight: 700; color: var(--bg); background: var(--text-muted);
+            width: 26px; height: 26px; border-radius: 50%; display: flex; align-items: center; justify-content: center; transition: background .3s;
         }
-        .active .step-number {
-            background-color: #2563EB;
-        }
+        .step-card.active .step-number { background: linear-gradient(135deg, var(--primary), var(--accent)); }
+        .step-title-text { font-size: .9rem; font-weight: 600; color: var(--text-dim); transition: color .3s; }
+        .step-card.active .step-title-text { color: var(--primary); }
+        .expand-icon { font-size: 1rem; color: var(--text-muted); transition: transform .3s; }
+        .step-card.active .expand-icon { transform: rotate(180deg); color: var(--primary); }
+        .step-body { max-height: 0; overflow: hidden; transition: max-height .4s ease, padding .4s ease; padding: 0 1.2rem; }
+        .step-card.active .step-body { max-height: 400px; padding-bottom: 1.2rem; }
+        .step-body p { font-size: .85rem; color: var(--text-dim); line-height: 1.7; }
+        .step-hint { font-size: .8rem; color: var(--text-muted); margin-top: .5rem; font-style: italic; }
 
-        .step-title {
-            font-size: 16px;
-            font-weight: 600;
-            color: #374151;
-            margin: 0;
-            transition: color 0.3s ease;
-        }
-        .active .step-title {
-            color: #1E40AF;
-        }
+        /* Progress */
+        .progress-wrapper { margin-bottom: 1.5rem; }
+        .progress-text { font-size: .8rem; font-weight: 600; color: var(--text-muted); margin-bottom: .4rem; }
+        .progress-container { height: 6px; background: var(--surface); border-radius: 10px; overflow: hidden; }
+        .progress-bar { height: 100%; background: linear-gradient(90deg, var(--primary), var(--accent)); width: 25%; transition: width .4s ease; border-radius: 10px; }
 
-        .expand-icon {
-            font-size: 18px;
-            color: #6B7280;
-            transition: transform 0.3s ease, color 0.3s ease;
+        /* Timer */
+        .timer-box {
+            background: linear-gradient(135deg, rgba(125,211,252,0.08), rgba(192,132,252,0.05));
+            border: 1px solid var(--border); border-radius: 16px; padding: 1.5rem; text-align: center;
         }
-        .active .expand-icon {
-            transform: rotate(180deg);
-            color: #2563EB;
+        .timer-label { font-size: .7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 2px; color: var(--text-muted); margin-bottom: .5rem; }
+        .timer-display {
+            font-family: 'JetBrains Mono', monospace; font-size: 2.8rem; font-weight: 700;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
         }
+        .timer-display.warning { background: linear-gradient(135deg, var(--amber), var(--red)); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+        .timer-sub { font-size: .75rem; color: var(--text-muted); margin-top: .3rem; }
 
-        .step-body {
-            max-height: 0;
-            overflow: hidden;
-            transition: max-height 0.4s ease, padding 0.4s ease;
-            padding: 0 20px;
+        /* Credentials */
+        .cred-box { border: 1px solid rgba(34,197,94,0.15); border-radius: 12px; padding: 1.2rem; background: rgba(34,197,94,0.03); }
+        .cred-title { font-size: .8rem; font-weight: 700; color: var(--green); margin-bottom: .75rem; display: flex; align-items: center; gap: .4rem; }
+        .cred-item { display: flex; justify-content: space-between; align-items: center; padding: .4rem 0; font-size: .8rem; }
+        .cred-label { color: var(--text-muted); font-weight: 600; }
+        .cred-value { color: var(--text); font-family: 'JetBrains Mono', monospace; font-size: .78rem; }
+        .cred-link { display: block; margin-top: .75rem; text-align: center; }
+        .cred-link a {
+            display: inline-flex; align-items: center; gap: .4rem;
+            background: linear-gradient(135deg, var(--primary), var(--primary-dim));
+            color: var(--bg); padding: .5rem 1.2rem; border-radius: 10px;
+            font-size: .82rem; font-weight: 700; text-decoration: none; transition: all .3s;
         }
+        .cred-link a:hover { transform: translateY(-2px); box-shadow: 0 6px 20px var(--primary-glow); }
 
-        .active .step-body {
-            max-height: 500px; /* Large enough to fit content */
-            padding-bottom: 20px;
-        }
-
-        .step-description {
-            font-size: 15px;
-            line-height: 1.6;
-            color: #4B5563;
-            margin: 0;
-        }
-        .step-hint {
-            font-size: 14px;
-            color: #9CA3AF;
-            margin: 10px 0 0 0;
-        }
-
-        /* 5. Progress Indicator */
-        .progress-wrapper {
-            margin-bottom: 25px;
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
-        .progress-text {
-            font-size: 14px;
-            font-weight: 500;
-            color: #6B7280;
-        }
-        .progress-container {
-            height: 8px;
-            background-color: #E5E7EB;
-            border-radius: 4px;
-            overflow: hidden;
-        }
-        .progress-bar {
-            height: 100%;
-            background-color: #3B82F6;
-            width: 25%; /* Set based on active step */
-            transition: width 0.4s ease;
-            border-radius: 4px;
-        }
-
-        /* 6. Action Buttons */
-        .button-group {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 15px;
-            margin-top: 10px;
-        }
-
+        /* Buttons */
         .btn {
-            border-radius: 30px;
-            padding: 12px 24px;
-            font-size: 15px;
-            font-weight: 600;
-            cursor: pointer;
-            border: none;
-            transition: box-shadow 0.3s ease, transform 0.1s ease;
-            outline: none;
-            display: inline-flex;
-            justify-content: center;
-            align-items: center;
-            text-align: center;
+            border: none; border-radius: 12px; padding: .75rem 1.5rem; font-size: .9rem;
+            font-weight: 700; cursor: pointer; transition: all .3s; display: inline-flex;
+            align-items: center; justify-content: center; gap: .5rem; width: 100;
+            font-family: 'Inter', sans-serif;
+        }
+        .btn-start {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dim));
+            color: var(--bg); box-shadow: 0 4px 15px var(--primary-glow); width: 100%;
+        }
+        .btn-start:hover { transform: translateY(-2px); box-shadow: 0 8px 25px var(--primary-glow); }
+        .btn-start:disabled { opacity: .6; cursor: not-allowed; transform: none; }
+        .btn-submit {
+            background: linear-gradient(135deg, var(--green), #16a34a);
+            color: #fff; box-shadow: 0 4px 15px rgba(34,197,94,0.2); width: 100%;
+        }
+        .btn-submit:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(34,197,94,0.3); }
+        .btn-submit:disabled { opacity: .6; cursor: not-allowed; transform: none; }
+        .btn-end {
+            background: rgba(239,68,68,0.1); color: var(--red); border: 1px solid rgba(239,68,68,0.2); width: 100%;
+        }
+        .btn-end:hover { background: rgba(239,68,68,0.2); }
+        .btn-end:disabled { opacity: .6; cursor: not-allowed; transform: none; }
+
+        /* Score Result */
+        .score-result {
+            border-radius: 16px; padding: 1.5rem; text-align: center;
+        }
+        .score-result.pass { background: rgba(34,197,94,0.05); border: 1px solid rgba(34,197,94,0.15); }
+        .score-result.fail { background: rgba(239,68,68,0.05); border: 1px solid rgba(239,68,68,0.15); }
+        .score-big { font-size: 3rem; font-weight: 900; margin: .5rem 0; }
+        .score-big.pass { color: var(--green); }
+        .score-big.fail { color: var(--red); }
+        .score-label { font-size: .8rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 1px; }
+        .score-details { margin-top: 1rem; }
+        .score-task { display: flex; justify-content: space-between; align-items: center; padding: .5rem 0; border-bottom: 1px solid var(--border); font-size: .82rem; }
+        .score-task:last-child { border-bottom: none; }
+        .score-task-name { color: var(--text-dim); }
+        .score-task-status { font-weight: 700; }
+        .score-task-status.pass { color: var(--green); }
+        .score-task-status.fail { color: var(--red); }
+
+        /* Validation output */
+        .validation-output {
+            background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+            padding: 1rem; font-family: 'JetBrains Mono', monospace; font-size: .78rem;
+            color: var(--green); white-space: pre-wrap; max-height: 200px; overflow-y: auto;
         }
 
-        .btn:hover {
-            box-shadow: 0 4px 8px rgba(37, 99, 235, 0.2);
+        /* Status indicator */
+        .status-badge {
+            display: inline-flex; align-items: center; gap: .4rem; padding: 4px 10px;
+            border-radius: 50px; font-size: .7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;
         }
+        .status-badge.active { background: rgba(34,197,94,0.1); color: var(--green); }
+        .status-badge .pulse-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); animation: pulse 2s infinite; }
+        @keyframes pulse { 0%,100% { opacity: 1; transform: scale(1); } 50% { opacity: .4; transform: scale(.8); } }
 
-        .btn:active {
-            transform: translateY(1px);
-        }
+        /* Hidden */
+        .hidden { display: none !important; }
 
-        .btn-primary {
-            background: linear-gradient(to right, #2563EB, #60A5FA);
-            color: #FFFFFF;
-            width: 100%; /* Make it large and prominent */
-            box-shadow: 0 2px 5px rgba(37, 99, 235, 0.2);
+        /* Responsive */
+        @media(max-width:900px) {
+            .lab-layout { grid-template-columns: 1fr; }
+            .control-panel { position: static; }
+            .lab-panel { position: static; }
         }
-        .btn-primary:hover {
-            background: linear-gradient(to right, #1E40AF, #3B82F6);
-        }
-
-        .btn-secondary {
-            background-color: #EFF6FF;
-            color: #2563EB;
-            border: 1px solid #DBEAFE;
-            padding: 12px 20px;
-        }
-        .btn-secondary:hover {
-            background-color: #DBEAFE;
-            box-shadow: none;
-        }
-
     </style>
 </head>
 <body>
-    <div class="lab-instructions-panel">
-        <header class="lab-header">
-            <h1 class="lab-title">EC2 Instance Launch Lab</h1>
-            <p class="lab-description">Learn how to launch and configure an EC2 instance with proper security settings.</p>
-        </header>
+    <div class="lab-layout">
+        <!-- LEFT: Instructions Panel -->
+        <div class="lab-panel">
+            <a href="{% url 'dashboard' %}" class="back-link">
+                <span class="material-symbols-outlined" style="font-size:1rem">arrow_back</span> Back to Dashboard
+            </a>
 
-        <section class="lab-section">
-            <h2 class="section-title">Objective</h2>
-            <p class="section-content">By the end of this lab, you will be able to launch an EC2 instance in a specified region, configure a security group to allow inbound SSH access, assign the correct IAM role, and verify that the instance is running correctly. This is a fundamental skill for cloud computing on AWS.</p>
-        </section>
+            <header class="lab-header">
+                <h1 class="lab-title">EC2 Instance Launch Lab</h1>
+                <p class="lab-desc">Learn how to launch and configure an EC2 instance with proper security settings on AWS.</p>
+            </header>
 
-        <section class="lab-section">
-            <h2 class="section-title">Rules</h2>
-            <div class="section-content">
-                <ul class="rules-list">
-                    <li>Use only the provided environment and credentials.</li>
-                    <li>Do not create any extra resources not specified in the instructions.</li>
-                    <li>The lab environment will automatically expire after the time limit (60 minutes).</li>
-                </ul>
-            </div>
-        </section>
+            <div class="section-title"><span class="material-symbols-outlined">flag</span> Objective</div>
+            <p class="section-content">By the end of this lab, you will be able to launch an EC2 instance in a specified region, configure a security group to allow inbound SSH access, and verify that the instance is running correctly.</p>
 
-        <section class="lab-section">
-            <h2 class="section-title">Instructions</h2>
+            <div class="section-title"><span class="material-symbols-outlined">gavel</span> Rules</div>
+            <ul class="rules-list">
+                <li>Use only the provided environment and credentials.</li>
+                <li>Do not create any extra resources not specified in the instructions.</li>
+                <li>The lab environment will automatically expire after 60 minutes.</li>
+            </ul>
+
+            <div class="section-title"><span class="material-symbols-outlined">checklist</span> Instructions</div>
             <div class="steps-container">
                 <article class="step-card active" id="step-1">
                     <header class="step-header">
                         <div class="step-info">
                             <span class="step-number">1</span>
-                            <h3 class="step-title">Launch EC2 Instance</h3>
+                            <h3 class="step-title-text">Launch EC2 Instance</h3>
                         </div>
-                        <span class="expand-icon">▼</span>
+                        <span class="expand-icon material-symbols-outlined">expand_more</span>
                     </header>
                     <div class="step-body">
-                        <p class="step-description">Navigate to the EC2 service in the AWS Console. Click 'Launch instances' and enter a name. Select 'Amazon Linux 2' for the AMI and set the instance type to <span style="font-family: monospace;">t2.micro</span>. Ensure the default VPC and a public subnet are selected.</p>
-                        <p class="step-hint">Remember to select the specific key pair provided in the 'Connect to your environment' section.</p>
+                        <p>Navigate to the EC2 service in the AWS Console. Click 'Launch instances' and enter a name. Select 'Amazon Linux 2' for the AMI and set the instance type to <code>t2.micro</code>. Ensure the default VPC and a public subnet are selected.</p>
+                        <p class="step-hint">💡 Remember to select the specific key pair provided.</p>
                     </div>
                 </article>
 
@@ -298,12 +224,12 @@
                     <header class="step-header">
                         <div class="step-info">
                             <span class="step-number">2</span>
-                            <h3 class="step-title">Configure Security Group</h3>
+                            <h3 class="step-title-text">Configure Security Group</h3>
                         </div>
-                        <span class="expand-icon">▼</span>
+                        <span class="expand-icon material-symbols-outlined">expand_more</span>
                     </header>
                     <div class="step-body">
-                        <p class="step-description">In the Network settings section during the instance launch process, create a new security group. Add a single inbound rule to allow SSH traffic (port 22) with the source set to 'My IP'. Give the security group a descriptive name like 'ssh-access'.</p>
+                        <p>In the Network settings section, create a new security group. Add a single inbound rule to allow SSH traffic (port 22) with the source set to 'My IP'. Give it a descriptive name like 'ssh-access'.</p>
                     </div>
                 </article>
 
@@ -311,12 +237,12 @@
                     <header class="step-header">
                         <div class="step-info">
                             <span class="step-number">3</span>
-                            <h3 class="step-title">Attach IAM Role</h3>
+                            <h3 class="step-title-text">Attach IAM Role</h3>
                         </div>
-                        <span class="expand-icon">▼</span>
+                        <span class="expand-icon material-symbols-outlined">expand_more</span>
                     </header>
                     <div class="step-body">
-                        <p class="step-description">Expand the 'Advanced details' section. In the 'IAM instance profile' dropdown, select the IAM role provided for this lab. This role has the necessary permissions for the instance to communicate with other services.</p>
+                        <p>Expand the 'Advanced details' section. In the 'IAM instance profile' dropdown, select the IAM role provided for this lab.</p>
                     </div>
                 </article>
 
@@ -324,53 +250,347 @@
                     <header class="step-header">
                         <div class="step-info">
                             <span class="step-number">4</span>
-                            <h3 class="step-title">Verify Instance</h3>
+                            <h3 class="step-title-text">Verify Instance</h3>
                         </div>
-                        <span class="expand-icon">▼</span>
+                        <span class="expand-icon material-symbols-outlined">expand_more</span>
                     </header>
                     <div class="step-body">
-                        <p class="step-description">Click 'Launch instance' to start the process. Once the instance creation is initiated, navigate back to the EC2 instances list. Wait a few moments and ensure that your new instance's status is <span style="font-family: monospace; color: #16A34A; font-weight: 500;">running</span>.</p>
+                        <p>Click 'Launch instance'. Navigate to the EC2 instances list and wait for your instance status to become <span style="color:var(--green);font-weight:600">running</span>.</p>
                     </div>
                 </article>
             </div>
-        </section>
 
-        <div class="progress-wrapper">
-            <span class="progress-text">Step 1 of 4</span>
-            <div class="progress-container">
-                <div class="progress-bar"></div>
+            <div class="progress-wrapper">
+                <span class="progress-text">Step 1 of 4</span>
+                <div class="progress-container">
+                    <div class="progress-bar" id="step-progress"></div>
+                </div>
             </div>
         </div>
 
-        <div class="button-group">
-            <button class="btn btn-primary">Start Lab</button>
-            <button class="btn btn-secondary">View Hint</button>
+        <!-- RIGHT: Control Panel -->
+        <div class="control-panel">
+
+            <!-- Timer Card -->
+            <div class="control-card timer-box hidden" id="timer-card">
+                <div class="timer-label">Time Remaining</div>
+                <div class="timer-display" id="timer-display">60:00</div>
+                <div class="timer-sub">Lab auto-expires when timer ends</div>
+            </div>
+
+            <!-- Credentials Card -->
+            <div class="control-card cred-box hidden" id="cred-card">
+                <div class="cred-title"><i class="fas fa-key"></i> Lab Credentials</div>
+                <div class="cred-item">
+                    <span class="cred-label">IAM User</span>
+                    <span class="cred-value" id="cred-user">—</span>
+                </div>
+                <div class="cred-item">
+                    <span class="cred-label">Password</span>
+                    <span class="cred-value" id="cred-pass">—</span>
+                </div>
+                <div class="cred-link">
+                    <a id="cred-url" href="#" target="_blank">
+                        <i class="fas fa-external-link-alt"></i> Open AWS Console
+                    </a>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="control-card" id="action-card">
+                <button class="btn btn-start" id="start-btn" onclick="startLab()">
+                    <span class="material-symbols-outlined" style="font-size:1.1rem">play_arrow</span> Start Lab
+                </button>
+                <button class="btn btn-submit hidden" id="submit-btn" onclick="submitLab()" style="margin-top:.75rem">
+                    <span class="material-symbols-outlined" style="font-size:1.1rem">check_circle</span> Submit Lab
+                </button>
+                <button class="btn btn-end hidden" id="end-btn" onclick="endLab()" style="margin-top:.75rem">
+                    <span class="material-symbols-outlined" style="font-size:1.1rem">stop_circle</span> End Lab & Cleanup
+                </button>
+            </div>
+
+            <!-- Score Result Card (shown after submit) -->
+            <div class="control-card hidden" id="score-card">
+                <div id="score-result-content"></div>
+            </div>
+
+            <!-- Status Card -->
+            <div class="control-card hidden" id="status-card">
+                <div style="display:flex;align-items:center;gap:.5rem;font-size:.82rem;color:var(--text-dim)">
+                    <span class="material-symbols-outlined" style="font-size:1rem;color:var(--primary)">info</span>
+                    <span id="status-text">Ready to start</span>
+                </div>
+            </div>
         </div>
     </div>
 
-    <script>
+
+<script>
+        // ========== ACCORDION ==========
         document.addEventListener('DOMContentLoaded', () => {
             const stepCards = document.querySelectorAll('.step-card');
             const progressText = document.querySelector('.progress-text');
-            const progressBar = document.querySelector('.progress-bar');
-            const totalSteps = stepCards.length;
+            const progressBar = document.getElementById('step-progress');
+            const total = stepCards.length;
 
             stepCards.forEach((card, index) => {
-                const header = card.querySelector('.step-header');
-                header.addEventListener('click', () => {
-                    // Close all cards
+                card.querySelector('.step-header').addEventListener('click', () => {
                     stepCards.forEach(c => c.classList.remove('active'));
-
-                    // Open the clicked card
                     card.classList.add('active');
-
-                    // Update progress
-                    const currentStep = index + 1;
-                    progressText.textContent = `Step ${currentStep} of ${totalSteps}`;
-                    progressBar.style.width = `${(currentStep / totalSteps) * 100}%`;
+                    const step = index + 1;
+                    progressText.textContent = `Step ${step} of ${total}`;
+                    progressBar.style.width = `${(step / total) * 100}%`;
                 });
             });
+
+            // Page reload par current state database se fetch karega
+            checkCurrentLabStatus(); 
         });
+
+        // ========== PAGE RELOAD STATUS CHECK ==========
+        async function checkCurrentLabStatus() {
+            try {
+                const response = await fetch('/Lab/status/', { 
+                    method: 'GET',
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                });
+                const data = await response.json();
+
+                // 'active' ho ya 'submitted', dono case mein hum credentials aur timer dikhayenge
+                if (data.status === 'active' || data.status === 'submitted') {
+                    showActiveState(data.credentials, data.timer_expires_at);
+                    
+                    if (data.status === 'submitted') {
+                        updateStatus('✅ Lab was submitted previously. You can perform tasks and validate again!');
+                    }
+                } else if (data.status === 'provisioning') {
+                    const btn = document.getElementById('start-btn');
+                    btn.textContent = '⏳ Provisioning Lab...';
+                    btn.disabled = true;
+                    updateStatus('🔄 Lab is currently provisioning. Please wait...');
+                } else if (data.status === 'expired') {
+                    updateStatus('⏰ Lab timer expired! Please end the lab.');
+                    document.getElementById('start-btn').classList.add('hidden');
+                    document.getElementById('end-btn').classList.remove('hidden');
+                }
+            } catch (error) {
+                console.error("Error fetching lab status:", error);
+            }
+        }
+
+        // ========== TIMER ==========
+        let timerInterval = null;
+
+        function startTimer(expiresAt) {
+            const timerCard = document.getElementById('timer-card');
+            const timerDisplay = document.getElementById('timer-display');
+            timerCard.classList.remove('hidden');
+
+            const expiry = new Date(expiresAt).getTime();
+
+            // Agar pehle se koi timer chal raha hai toh usko clear karein (to avoid double speeding)
+            if (timerInterval) clearInterval(timerInterval);
+
+            timerInterval = setInterval(() => {
+                const now = Date.now();
+                const diff = expiry - now;
+
+                if (diff <= 0) {
+                    clearInterval(timerInterval);
+                    timerDisplay.textContent = '00:00';
+                    timerDisplay.classList.add('warning');
+                    updateStatus('⏰ Lab timer expired! Submit your work.');
+                    submitLab(); // Auto-submit
+                    return;
+                }
+
+                const mins = Math.floor(diff / 60000);
+                const secs = Math.floor((diff % 60000) / 1000);
+                timerDisplay.textContent = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+
+                if (mins < 10) {
+                    timerDisplay.classList.add('warning');
+                } else {
+                    timerDisplay.classList.remove('warning');
+                }
+            }, 1000);
+        }
+
+        // ========== UI HELPERS ==========
+        function updateStatus(msg) {
+            const card = document.getElementById('status-card');
+            card.classList.remove('hidden');
+            document.getElementById('status-text').textContent = msg;
+        }
+
+        function showActiveState(credentials, timerExpiresAt) {
+            // Show credentials
+            document.getElementById('cred-card').classList.remove('hidden');
+            document.getElementById('cred-user').textContent = credentials.iam_user_name;
+            document.getElementById('cred-pass').textContent = credentials.console_password;
+            document.getElementById('cred-url').href = credentials.console_login_link;
+
+            // Show timer
+            startTimer(timerExpiresAt);
+
+            // Toggle buttons
+            document.getElementById('start-btn').classList.add('hidden');
+            document.getElementById('submit-btn').classList.remove('hidden');
+            document.getElementById('end-btn').classList.remove('hidden');
+
+            updateStatus('✅ Lab is active. Perform the tasks in AWS Console.');
+        }
+
+        function getCookie(name) {
+            let v = null;
+            document.cookie.split(';').forEach(c => {
+                c = c.trim();
+                if (c.startsWith(name + '=')) v = decodeURIComponent(c.substring(name.length + 1));
+            });
+            return v;
+        }
+
+        // ========== API CALLS ==========
+        async function startLab() {
+            const btn = document.getElementById('start-btn');
+            btn.textContent = '⏳ Provisioning Lab...';
+            btn.disabled = true;
+            updateStatus('🔄 Running Terraform... This may take 1-2 minutes.');
+
+            try {
+                const response = await fetch('/Lab/start/', {
+                    method: 'POST',
+                    headers: { 'X-CSRFToken': getCookie('csrftoken') }
+                });
+                const data = await response.json();
+
+                if (data.status === 'success') {
+                    showActiveState(data.credentials, data.timer_expires_at);
+                } else {
+                    alert('Error: ' + data.message);
+                    btn.innerHTML = '<span class="material-symbols-outlined" style="font-size:1.1rem">play_arrow</span> Start Lab';
+                    btn.disabled = false;
+                    updateStatus('❌ Failed to start lab. Try again.');
+                }
+            } catch (error) {
+                alert('Network Error: ' + error.message);
+                btn.innerHTML = '<span class="material-symbols-outlined" style="font-size:1.1rem">play_arrow</span> Start Lab';
+                btn.disabled = false;
+                updateStatus('❌ Network error.');
+            }
+        }
+
+        async function submitLab() {
+            const btn = document.getElementById('submit-btn');
+            btn.textContent = '⏳ Validating...';
+            btn.disabled = true;
+            updateStatus('🔍 Checking your AWS activities via Boto3...');
+
+            try {
+                const response = await fetch('/Lab/submit/', {
+                    method: 'POST',
+                    headers: { 'X-CSRFToken': getCookie('csrftoken') }
+                });
+                const data = await response.json();
+
+                if (data.status === 'success') {
+                    showScore(data);
+                    
+                    // Button ko wapas normal state me layenge taaki dobara click ho sake
+                    btn.innerHTML = '<span class="material-symbols-outlined" style="font-size:1.1rem">check_circle</span> Submit Lab';
+                    btn.disabled = false;
+                    
+                    updateStatus('📊 Score generated. You can fix tasks and validate again, or click "End Lab" to cleanup.');
+                } else {
+                    alert('Error: ' + data.message);
+                    btn.innerHTML = '<span class="material-symbols-outlined" style="font-size:1.1rem">check_circle</span> Submit Lab';
+                    btn.disabled = false;
+                    updateStatus('❌ Validation failed: ' + data.message);
+                }
+            } catch (error) {
+                alert('Network Error: ' + error.message);
+                btn.innerHTML = '<span class="material-symbols-outlined" style="font-size:1.1rem">check_circle</span> Submit Lab';
+                btn.disabled = false;
+            }
+        }
+
+        function showScore(data) {
+            const card = document.getElementById('score-card');
+            const content = document.getElementById('score-result-content');
+            const score = data.score;
+            const isPassing = score.score_percentage >= 50;
+
+            let tasksHtml = '';
+            data.tasks.forEach(t => {
+                tasksHtml += `
+                    <div class="score-task">
+                        <span class="score-task-name">${t.task_name}</span>
+                        <span class="score-task-status ${t.passed ? 'pass' : 'fail'}">${t.passed ? '✅ Pass' : '❌ Fail'}</span>
+                    </div>`;
+            });
+
+            content.innerHTML = `
+                <div class="score-result ${isPassing ? 'pass' : 'fail'}">
+                    <div class="score-label">Your Score</div>
+                    <div class="score-big ${isPassing ? 'pass' : 'fail'}">${score.score_percentage}%</div>
+                    <div style="font-size:.85rem;color:var(--text-dim)">${score.passed_tasks}/${score.total_tasks} tasks passed</div>
+                    <div class="score-details">${tasksHtml}</div>
+                </div>`;
+
+            card.classList.remove('hidden');
+        }
+
+        async function endLab() {
+            if (!confirm('Are you sure you want to end the lab? This will destroy ALL AWS resources.')) return;
+
+            const btn = document.getElementById('end-btn');
+            btn.textContent = '⏳ Cleaning up...';
+            btn.disabled = true;
+            
+            // Validate button ko bhi disable kardo cleanup ke time
+            document.getElementById('submit-btn').disabled = true;
+            
+            updateStatus('🧹 Running cleanup + terraform destroy...');
+
+            try {
+                const response = await fetch('/Lab/end/', {
+                    method: 'POST',
+                    headers: { 'X-CSRFToken': getCookie('csrftoken') }
+                });
+                const data = await response.json();
+
+                if (data.status === 'success') {
+                    if (timerInterval) clearInterval(timerInterval);
+
+                    if (data.score) {
+                        showScore({ score: data.score, tasks: [] });
+                    }
+
+                    updateStatus('✅ Lab ended. All resources destroyed. Score saved!');
+
+                    btn.classList.add('hidden');
+                    document.getElementById('submit-btn').classList.add('hidden');
+                    document.getElementById('timer-card').classList.add('hidden');
+
+                    document.getElementById('action-card').innerHTML = `
+                        <a href="/dashboard/" style="text-decoration:none">
+                            <button class="btn btn-start" style="width:100%">
+                                <span class="material-symbols-outlined" style="font-size:1.1rem">dashboard</span> Go to Dashboard
+                            </button>
+                        </a>`;
+                } else {
+                    alert('Error: ' + data.message);
+                    btn.innerHTML = '<span class="material-symbols-outlined" style="font-size:1.1rem">stop_circle</span> End Lab & Cleanup';
+                    btn.disabled = false;
+                    document.getElementById('submit-btn').disabled = false;
+                }
+            } catch (error) {
+                alert('Network Error: ' + error.message);
+                btn.innerHTML = '<span class="material-symbols-outlined" style="font-size:1.1rem">stop_circle</span> End Lab & Cleanup';
+                btn.disabled = false;
+                document.getElementById('submit-btn').disabled = false;
+            }
+        }
     </script>
 </body>
 </html>
