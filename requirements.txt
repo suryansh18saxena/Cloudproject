@@ -1,0 +1,18 @@
+# Web Framework
+django>=4.2,<5.0
+
+python-dotenv
+
+boto3
+
+psycopg2-binary
+
+django-crispy-forms
+crispy-bootstrap5
+
+celery
+redis
+
+djangorestframework
+
+requests
