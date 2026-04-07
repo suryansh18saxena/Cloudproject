@@ -50,6 +50,8 @@ def ec2_lab(request):
 @login_required
 @require_POST
 def start_lab(request):
+
+    
     """Start a new lab session: Terraform apply → credentials → timer starts."""
     try:
         lab = Lab.objects.filter(slug='ec2-launch-lab').first()
@@ -88,17 +90,17 @@ def start_lab(request):
             status='provisioning',
             terraform_state='applying',
         )
-
+        my_env = os.environ.copy()
         # 1. Terraform Init
         subprocess.run(
             ["terraform", "init"],
-            cwd=TF_DIR, check=True, capture_output=True
+            cwd=TF_DIR, check=True, capture_output=True, env=my_env
         )
 
         # 2. Terraform Apply
         subprocess.run(
             ["terraform", "apply", "-auto-approve"],
-            cwd=TF_DIR, check=True, capture_output=True
+            cwd=TF_DIR, check=True, capture_output=True, env=my_env
         )
 
         session.terraform_state = 'applied'
