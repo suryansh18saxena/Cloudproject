@@ -1,0 +1,676 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CloudLabX - Recent Sessions</title>
+  <meta name="description" content="Browse recent interview sessions and review your conversation history." />
+
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --bg: #030408;
+      --bg-radial: radial-gradient(circle at 50% 0%, #111827 0%, #030408 70%);
+      --surface: #0f172a;
+      --surface2: #1e293b;
+      --surface-glass: rgba(15, 23, 42, 0.65);
+      --primary: #38bdf8;
+      --primary-dim: #0ea5e9;
+      --primary-glow: rgba(56, 189, 248, 0.25);
+      --accent: #c084fc;
+      --accent2: #f472b6;
+      --accent-glow: rgba(192, 132, 252, 0.2);
+      --text: #f8fafc;
+      --text-dim: #cbd5e1;
+      --text-muted: #64748b;
+      --border: rgba(148, 163, 184, 0.1);
+      --border-light: rgba(255, 255, 255, 0.05);
+      --border-hover: rgba(56, 189, 248, 0.3);
+      --green: #10b981;
+      --red: #ef4444;
+      --amber: #f59e0b;
+      --shadow-sm: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2);
+      --shadow-lg: 0 10px 25px -3px rgba(0, 0, 0, 0.5), 0 4px 6px -2px rgba(0, 0, 0, 0.3);
+    }
+
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg-radial);
+      background-attachment: fixed;
+      color: var(--text);
+      overflow-x: hidden;
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    ::selection { background: rgba(56, 189, 248, 0.3); color: #fff; }
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--surface2); border-radius: 10px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+
+    .sidebar {
+      position: fixed;
+      left: 0;
+      top: 0;
+      width: 260px;
+      height: 100vh;
+      background: var(--surface-glass);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border-right: 1px solid var(--border);
+      z-index: 100;
+      display: flex;
+      flex-direction: column;
+      padding: 1.5rem 0;
+    }
+    .sidebar-brand { display: flex; align-items: center; gap: .85rem; padding: 0 1.5rem; margin-bottom: 2rem; }
+    .brand-icon {
+      width: 42px; height: 42px; border-radius: 12px;
+      background: linear-gradient(135deg, var(--primary), var(--accent));
+      display: flex; align-items: center; justify-content: center;
+      color: #fff; font-size: 1.3rem;
+      box-shadow: 0 0 20px var(--primary-glow);
+    }
+    .brand-text h2 { font-size: 1.15rem; font-weight: 800; letter-spacing: -0.5px; color: #fff; }
+    .brand-text p { font-size: .65rem; color: var(--primary); text-transform: uppercase; letter-spacing: 1.5px; font-weight: 700; }
+    .sidebar-nav { flex: 1; padding: 0 1rem; }
+    .nav-label { font-size: .65rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1.5px; font-weight: 700; padding: 1rem .75rem .5rem; }
+    .nav-item {
+      display: flex; align-items: center; gap: .85rem; padding: .75rem 1rem; border-radius: 10px;
+      color: var(--text-dim); font-size: .88rem; font-weight: 500; cursor: pointer;
+      transition: all .2s ease; text-decoration: none; margin-bottom: 4px; position: relative;
+    }
+    .nav-item:hover { background: rgba(255, 255, 255, 0.03); color: var(--text); transform: translateX(4px); }
+    .nav-item.active {
+      background: linear-gradient(90deg, rgba(56, 189, 248, 0.1) 0%, transparent 100%);
+      color: var(--primary); font-weight: 600;
+      border-left: 3px solid var(--primary);
+      border-radius: 0 10px 10px 0;
+    }
+    .nav-item .material-symbols-outlined { font-size: 1.25rem; opacity: 0.8; }
+    .nav-item.active .material-symbols-outlined { opacity: 1; color: var(--primary); }
+    .nav-badge { margin-left: auto; font-size: .65rem; padding: 3px 8px; border-radius: 20px; font-weight: 700; background: var(--accent-glow); color: var(--accent); }
+    .sidebar-footer { padding: 1.5rem; border-top: 1px solid var(--border); }
+    .user-info { display: flex; align-items: center; gap: .85rem; background: rgba(255,255,255,0.02); padding: .75rem; border-radius: 12px; border: 1px solid var(--border-light); }
+    .user-avatar {
+      width: 38px; height: 38px; border-radius: 10px;
+      background: linear-gradient(135deg, var(--surface2), var(--surface));
+      border: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: .9rem; color: var(--text);
+    }
+    .user-name { font-size: .88rem; font-weight: 600; color: #fff; }
+    .user-role { font-size: .7rem; color: var(--primary); font-weight: 500; }
+
+    .topbar {
+      position: fixed; top: 0; left: 260px; right: 0; height: 70px;
+      background: rgba(3, 4, 8, 0.7); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border); z-index: 90;
+      display: flex; align-items: center; justify-content: space-between; padding: 0 2rem;
+    }
+    .topbar-title { display: flex; align-items: center; gap: .75rem; }
+    .topbar-title h3 { font-size: 1.05rem; font-weight: 700; color: var(--text); }
+    .topbar-title .material-symbols-outlined { color: var(--primary); font-size: 1.4rem; filter: drop-shadow(0 0 8px var(--primary-glow)); }
+    .action-btn {
+      width: 42px; height: 42px; border-radius: 12px; background: var(--surface);
+      border: 1px solid var(--border); display: flex; align-items: center; justify-content: center;
+      color: var(--text-dim); cursor: pointer; transition: all .3s cubic-bezier(0.4, 0, 0.2, 1);
+      text-decoration: none;
+    }
+    .action-btn:hover { border-color: var(--primary); color: var(--primary); box-shadow: 0 0 20px var(--primary-glow); transform: translateY(-2px); }
+
+    .main { margin-left: 260px; padding-top: 70px; min-height: 100vh; }
+    .shell { padding: 1.5rem 2rem 2rem; }
+    .hero {
+      display: flex; align-items: flex-end; justify-content: space-between; gap: 1.5rem;
+      margin-bottom: 1.5rem;
+    }
+    .hero-copy h1 { font-size: 2rem; font-weight: 800; letter-spacing: -0.04em; color: #fff; margin-bottom: .45rem; }
+    .hero-copy p { color: var(--text-dim); max-width: 720px; }
+    .hero-actions { display: flex; gap: .75rem; flex-wrap: wrap; }
+    .primary-link, .secondary-link {
+      display: inline-flex; align-items: center; justify-content: center; gap: .5rem; text-decoration: none;
+      border-radius: 12px; padding: .85rem 1rem; font-weight: 700; transition: all .2s ease;
+    }
+    .primary-link { background: linear-gradient(135deg, var(--primary), var(--primary-dim)); color: #fff; box-shadow: 0 4px 15px var(--primary-glow); }
+    .primary-link:hover { transform: translateY(-1px); box-shadow: 0 8px 25px var(--primary-glow); }
+    .secondary-link { background: rgba(255,255,255,0.03); color: var(--text); border: 1px solid var(--border); }
+    .secondary-link:hover { border-color: var(--border-hover); background: rgba(56,189,248,0.08); }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+    .stat-card {
+      background: var(--surface-glass);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 1.2rem;
+      box-shadow: var(--shadow-sm);
+    }
+    .stat-label { font-size: .72rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; font-weight: 700; margin-bottom: .4rem; }
+    .stat-value { font-size: 1.7rem; font-weight: 800; line-height: 1; color: #fff; }
+    .stat-card.primary .stat-value { color: var(--primary); }
+    .stat-card.green .stat-value { color: var(--green); }
+    .stat-card.amber .stat-value { color: var(--amber); }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(320px, 420px) minmax(0, 1fr);
+      gap: 1rem;
+    }
+    .panel {
+      background: rgba(15, 23, 42, 0.42);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      overflow: hidden;
+      min-height: 70vh;
+      box-shadow: var(--shadow-lg);
+    }
+    .panel-header {
+      padding: 1rem 1.25rem;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      background: rgba(3,4,8,0.35);
+    }
+    .panel-header h2 { font-size: .95rem; font-weight: 800; letter-spacing: .02em; }
+    .panel-header span { font-size: .75rem; color: var(--text-muted); }
+    .panel-body { padding: 1rem; }
+
+    .session-list { display: flex; flex-direction: column; gap: .75rem; }
+    .session-card {
+      width: 100%;
+      text-align: left;
+      background: linear-gradient(180deg, rgba(30, 41, 59, 0.95), rgba(15, 23, 42, 0.92));
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 1rem;
+      cursor: pointer;
+      transition: transform .2s ease, border-color .2s ease, box-shadow .2s ease;
+      color: inherit;
+    }
+    .session-card:hover, .session-card.active {
+      transform: translateY(-2px);
+      border-color: var(--border-hover);
+      box-shadow: 0 10px 24px rgba(0,0,0,.28);
+    }
+    .session-top { display: flex; align-items: flex-start; justify-content: space-between; gap: .75rem; margin-bottom: .7rem; }
+    .session-role { font-size: .98rem; font-weight: 800; color: #fff; }
+    .score-pill {
+      display: inline-flex; align-items: center; gap: .3rem; padding: .35rem .7rem; border-radius: 999px;
+      font-size: .75rem; font-weight: 800; white-space: nowrap;
+    }
+    .score-pill.high { background: rgba(16, 185, 129, 0.12); color: var(--green); border: 1px solid rgba(16, 185, 129, 0.2); }
+    .score-pill.mid { background: rgba(245, 158, 11, 0.12); color: var(--amber); border: 1px solid rgba(245, 158, 11, 0.2); }
+    .score-pill.low { background: rgba(239, 68, 68, 0.12); color: var(--red); border: 1px solid rgba(239, 68, 68, 0.2); }
+    .session-meta { display: flex; flex-wrap: wrap; gap: .5rem 1rem; color: var(--text-muted); font-size: .78rem; }
+    .session-meta span { display: inline-flex; align-items: center; gap: .35rem; }
+    .session-footer { display: flex; align-items: center; justify-content: space-between; gap: .75rem; margin-top: .9rem; }
+    .status-chip {
+      display: inline-flex; align-items: center; gap: .35rem; padding: .3rem .65rem; border-radius: 999px;
+      font-size: .68rem; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; border: 1px solid transparent;
+    }
+    .status-chip.completed { background: rgba(16, 185, 129, 0.12); color: var(--green); border-color: rgba(16, 185, 129, 0.2); }
+    .status-chip.abandoned { background: rgba(239, 68, 68, 0.12); color: var(--red); border-color: rgba(239, 68, 68, 0.2); }
+    .status-chip.active { background: rgba(56, 189, 248, 0.12); color: var(--primary); border-color: rgba(56, 189, 248, 0.2); }
+    .session-date { font-size: .72rem; color: var(--text-muted); }
+
+    .empty-state {
+      border: 1px dashed rgba(148, 163, 184, 0.18);
+      border-radius: 16px;
+      background: rgba(255,255,255,0.02);
+      padding: 2rem 1rem;
+      text-align: center;
+      color: var(--text-muted);
+    }
+
+    .detail-hero {
+      padding: 1.25rem;
+      border-bottom: 1px solid var(--border);
+      background: linear-gradient(180deg, rgba(56, 189, 248, 0.06), rgba(3, 4, 8, 0.2));
+    }
+    .detail-hero h3 { font-size: 1.15rem; font-weight: 800; margin-bottom: .35rem; }
+    .detail-hero p { color: var(--text-dim); font-size: .92rem; }
+    .detail-meta {
+      display: flex; flex-wrap: wrap; gap: .5rem .75rem; margin-top: .9rem;
+    }
+    .detail-meta .meta-pill {
+      display: inline-flex; align-items: center; gap: .35rem; padding: .35rem .7rem; border-radius: 999px;
+      background: rgba(255,255,255,0.03); color: var(--text-dim); font-size: .75rem; border: 1px solid var(--border);
+    }
+
+    .detail-stats {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: .75rem;
+      margin-top: 1rem;
+    }
+    .mini-card {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: .9rem;
+      text-align: center;
+    }
+    .mini-card .num { font-size: 1.35rem; font-weight: 800; line-height: 1; margin-bottom: .25rem; }
+    .mini-card .lbl { font-size: .68rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; font-weight: 700; }
+
+    .timeline {
+      padding: 1rem 1.25rem 1.25rem;
+      display: flex;
+      flex-direction: column;
+      gap: .9rem;
+      max-height: calc(70vh - 200px);
+      overflow-y: auto;
+    }
+    .timeline-empty {
+      padding: 2rem 1rem;
+      color: var(--text-muted);
+      text-align: center;
+      border: 1px dashed rgba(148, 163, 184, 0.18);
+      border-radius: 16px;
+      background: rgba(255,255,255,0.02);
+    }
+    .entry {
+      display: flex;
+      gap: .9rem;
+      align-items: flex-start;
+    }
+    .entry-avatar {
+      width: 38px; height: 38px; border-radius: 12px; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center; font-size: 1rem;
+      box-shadow: var(--shadow-sm);
+    }
+    .entry.bot .entry-avatar { background: linear-gradient(135deg, var(--accent), var(--accent2)); color: #fff; }
+    .entry.user .entry-avatar { background: linear-gradient(135deg, var(--primary), var(--primary-dim)); color: #fff; }
+    .entry-body { flex: 1; }
+    .entry-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 1rem;
+      box-shadow: var(--shadow-sm);
+    }
+    .entry-label {
+      display: inline-flex;
+      align-items: center;
+      gap: .35rem;
+      font-size: .68rem;
+      font-weight: 800;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: .6rem;
+    }
+    .entry-card p { color: var(--text-dim); font-size: .92rem; line-height: 1.65; }
+    .feedback-box {
+      background: rgba(56, 189, 248, 0.05);
+      border: 1px solid rgba(56, 189, 248, 0.14);
+      border-radius: 16px;
+      padding: 1rem;
+    }
+    .feedback-head { display: flex; align-items: center; justify-content: space-between; gap: .75rem; margin-bottom: .75rem; }
+    .rating-chip {
+      display: inline-flex; align-items: center; gap: .35rem; padding: .3rem .65rem; border-radius: 999px;
+      background: rgba(255,255,255,0.04); color: #fff; font-size: .72rem; font-weight: 800; text-transform: uppercase;
+    }
+    .feedback-score { font-size: 1rem; font-weight: 800; color: var(--primary); }
+    .ideal-answer {
+      margin-top: .85rem;
+      border-radius: 14px;
+      padding: .9rem;
+      background: rgba(16, 185, 129, 0.06);
+      border: 1px solid rgba(16, 185, 129, 0.18);
+    }
+    .ideal-answer .label {
+      display: inline-flex; align-items: center; gap: .35rem; color: var(--green); font-size: .68rem; font-weight: 800; text-transform: uppercase; letter-spacing: .08em; margin-bottom: .5rem;
+    }
+
+    .report-link {
+      display: inline-flex; align-items: center; gap: .4rem; margin-top: 1rem;
+      text-decoration: none; color: var(--primary); font-size: .85rem; font-weight: 700;
+    }
+
+    .mobile-toggle { display: none; }
+    .hidden { display: none !important; }
+
+    @media (max-width: 1100px) {
+      .layout { grid-template-columns: 1fr; }
+      .panel { min-height: auto; }
+      .timeline { max-height: none; }
+    }
+    @media (max-width: 768px) {
+      .sidebar { transform: translateX(-100%); }
+      .sidebar.open { transform: translateX(0); }
+      .topbar { left: 0; padding: 0 1rem; }
+      .main { margin-left: 0; }
+      .mobile-toggle { display: block; background: transparent; border: none; color: #fff; font-size: 1.5rem; }
+      .shell { padding: 1rem; }
+      .hero { flex-direction: column; align-items: flex-start; }
+      .stats-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .detail-stats { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+      <div class="brand-icon"><span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1">ac_unit</span></div>
+      <div class="brand-text">
+        <h2>CloudLabX</h2>
+        <p>Cloud Learning</p>
+      </div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-label">Main</div>
+      <a class="nav-item" href="{% url 'dashboard' %}"><span class="material-symbols-outlined">dashboard</span>Dashboard</a>
+      <a class="nav-item" href="{% url 'EC2_Lab' %}"><span class="material-symbols-outlined">science</span>Labs</a>
+      <a class="nav-item" href="{% url 'interview_home' %}"><span class="material-symbols-outlined">forum</span>Interview Prep</a>
+      <a class="nav-item active" href="{% url 'recent_sessions' %}"><span class="material-symbols-outlined">history</span>Recent Sessions<span class="nav-badge">New</span></a>
+      <div class="nav-label" style="margin-top:1.5rem">Account</div>
+      <a class="nav-item" href="#"><span class="material-symbols-outlined">settings</span>Settings</a>
+      <a class="nav-item" href="{% url 'logout' %}"><span class="material-symbols-outlined">logout</span>Logout</a>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="user-info">
+        <div class="user-avatar">{{ user.first_name|make_list|first|default:"U" }}{{ user.last_name|make_list|first|default:"" }}</div>
+        <div>
+          <div class="user-name">{{ user.get_full_name|default:user.username }}</div>
+          <div class="user-role">Cloud Learner</div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <header class="topbar">
+    <div style="display:flex;align-items:center;gap:1.25rem">
+      <button class="mobile-toggle" onclick="document.getElementById('sidebar').classList.toggle('open')"><i class="fas fa-bars"></i></button>
+      <div class="topbar-title">
+        <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1">history</span>
+        <h3>Recent Sessions</h3>
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;gap:.75rem">
+      <a class="action-btn" href="{% url 'interview_home' %}" title="Back to Interview">
+        <span class="material-symbols-outlined">forum</span>
+      </a>
+      <a class="action-btn" href="{% url 'dashboard' %}" title="Back to Dashboard">
+        <span class="material-symbols-outlined">grid_view</span>
+      </a>
+    </div>
+  </header>
+
+  <main class="main">
+    <div class="shell">
+      <section class="hero">
+        <div class="hero-copy">
+          <h1>Session history at a glance.</h1>
+          <p>Review your most recent interview sessions, inspect the conversation history, and compare your scores across roles and difficulty levels.</p>
+        </div>
+        <div class="hero-actions">
+          <a class="primary-link" href="{% url 'interview_home' %}"><span class="material-symbols-outlined">forum</span>Go to Interview</a>
+          <a class="secondary-link" href="{% url 'dashboard' %}"><span class="material-symbols-outlined">dashboard</span>Dashboard</a>
+        </div>
+      </section>
+
+      <section class="stats-grid">
+        <div class="stat-card primary">
+          <div class="stat-label">Total Sessions</div>
+          <div class="stat-value">{{ total_sessions }}</div>
+        </div>
+        <div class="stat-card green">
+          <div class="stat-label">Completed</div>
+          <div class="stat-value">{{ completed_sessions }}</div>
+        </div>
+        <div class="stat-card amber">
+          <div class="stat-label">Active</div>
+          <div class="stat-value">{{ active_sessions }}</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Average Score</div>
+          <div class="stat-value">{{ avg_score }}%</div>
+        </div>
+      </section>
+
+      <section class="layout">
+        <div class="panel">
+          <div class="panel-header">
+            <div>
+              <h2>Recent Sessions</h2>
+              <span>Click a session to review its full transcript.</span>
+            </div>
+            <span>{{ sessions|length }} loaded</span>
+          </div>
+          <div class="panel-body">
+            <div class="session-list">
+              {% for session in sessions %}
+              <button
+                type="button"
+                class="session-card {% if forloop.first %}active{% endif %}"
+                data-session-id="{{ session.id }}"
+                data-role="{{ session.get_role_display }}"
+                data-difficulty="{{ session.get_difficulty_display }}"
+                data-status="{{ session.get_status_display }}"
+                data-score="{{ session.overall_score }}"
+                data-duration="{{ session.duration_minutes }}"
+                data-started="{{ session.started_at|date:'M j, Y' }}"
+                onclick="loadSession({{ session.id }}, this)"
+              >
+                <div class="session-top">
+                  <div class="session-role">{{ session.get_role_display }}</div>
+                  <div class="score-pill {% if session.overall_score >= 70 %}high{% elif session.overall_score >= 40 %}mid{% else %}low{% endif %}">
+                    <i class="fas fa-star" style="font-size:.6rem"></i> {{ session.overall_score }}%
+                  </div>
+                </div>
+                <div class="session-meta">
+                  <span><i class="fas fa-layer-group" style="font-size:.65rem"></i> {{ session.get_difficulty_display }}</span>
+                  <span><i class="fas fa-clock" style="font-size:.65rem"></i> {{ session.duration_minutes }}m</span>
+                </div>
+                <div class="session-footer">
+                  <span class="status-chip {{ session.status }}">{{ session.get_status_display }}</span>
+                  <span class="session-date">{{ session.started_at|date:"M j, Y" }}</span>
+                </div>
+              </button>
+              {% empty %}
+              <div class="empty-state">
+                <span class="material-symbols-outlined" style="font-size:2.5rem;display:block;margin-bottom:1rem;opacity:0.5">history</span>
+                No sessions yet.<br />Start an interview to create your first record.
+              </div>
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-header">
+            <div>
+              <h2>Session Detail</h2>
+              <span id="detailHint">Select a session to view the transcript.</span>
+            </div>
+            <a class="report-link" href="{% url 'interview_home' %}"><span class="material-symbols-outlined">forum</span>Open Interview</a>
+          </div>
+          <div id="detailRoot">
+            <div class="detail-hero">
+              <h3 id="detailRole">No session selected</h3>
+              <p id="detailSummary">Choose a session from the left panel to see questions, feedback, and report details.</p>
+              <div class="detail-meta" id="detailMeta"></div>
+              <div class="detail-stats" id="detailStats"></div>
+            </div>
+            <div class="timeline" id="detailTimeline">
+              <div class="timeline-empty">
+                <span class="material-symbols-outlined" style="font-size:2.5rem;display:block;margin-bottom:1rem;opacity:0.5">touch_app</span>
+                Select a session to load its conversation.
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <script>
+    const csrfToken = '{{ csrf_token }}';
+
+    function scoreClass(score) {
+      if (score >= 70) return 'high';
+      if (score >= 40) return 'mid';
+      return 'low';
+    }
+
+    function escapeHtml(text) {
+      return String(text)
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#39;');
+    }
+
+    function renderMessageCard(msg, index) {
+      const isFeedback = msg.is_feedback;
+      const senderClass = msg.sender === 'bot' ? 'bot' : 'user';
+      const avatar = msg.sender === 'bot'
+        ? '<span class="material-symbols-outlined" style="font-variation-settings:\'FILL\' 1;font-size:1.1rem">smart_toy</span>'
+        : '{{ user.first_name|make_list|first|default:"U" }}';
+
+      if (isFeedback) {
+        return `
+          <div class="entry bot">
+            <div class="entry-avatar">${avatar}</div>
+            <div class="entry-body">
+              <div class="feedback-box">
+                <div class="feedback-head">
+                  <div class="rating-chip">
+                    <span class="material-symbols-outlined" style="font-size:1rem">${getRatingIcon(msg.answer_rating)}</span>
+                    ${escapeHtml(msg.answer_rating || 'average')}
+                  </div>
+                  <div class="feedback-score">${msg.score}/10</div>
+                </div>
+                <p>${escapeHtml(msg.content).replace(/\n/g, '<br>')}</p>
+                ${msg.ideal_answer ? `
+                  <div class="ideal-answer">
+                    <div class="label"><span class="material-symbols-outlined" style="font-size:1rem">lightbulb</span>Ideal Answer</div>
+                    <p>${escapeHtml(msg.ideal_answer).replace(/\n/g, '<br>')}</p>
+                  </div>
+                ` : ''}
+              </div>
+            </div>
+          </div>`;
+      }
+
+      return `
+        <div class="entry ${senderClass}">
+          <div class="entry-avatar">${avatar}</div>
+          <div class="entry-body">
+            <div class="entry-card">
+              <div class="entry-label">
+                <span class="material-symbols-outlined" style="font-size:1rem">${msg.sender === 'bot' ? 'smart_toy' : 'person'}</span>
+                ${msg.sender === 'bot' ? (msg.is_question ? 'Question' : 'Message') : 'Your Answer'}
+              </div>
+              <p>${msg.is_question ? '<strong style="color:var(--primary)">Q:</strong> ' : ''}${escapeHtml(msg.content).replace(/\n/g, '<br>')}</p>
+            </div>
+          </div>
+        </div>`;
+    }
+
+    function getRatingIcon(rating) {
+      const icons = { excellent: 'emoji_events', good: 'thumb_up', average: 'trending_flat', poor: 'thumb_down', incorrect: 'close' };
+      return icons[rating] || 'help';
+    }
+
+    async function loadSession(sessionId, card) {
+      document.querySelectorAll('.session-card').forEach(item => item.classList.remove('active'));
+      if (card) card.classList.add('active');
+
+      const role = card?.dataset.role || 'Session';
+      const difficulty = card?.dataset.difficulty || 'Unknown';
+      const status = card?.dataset.status || 'Unknown';
+      const score = card?.dataset.score || '0';
+      const duration = card?.dataset.duration || '0';
+      const started = card?.dataset.started || '';
+
+      document.getElementById('detailRole').textContent = role;
+      document.getElementById('detailSummary').textContent = 'Loading transcript...';
+      document.getElementById('detailHint').textContent = `Session #${sessionId}`;
+      document.getElementById('detailMeta').innerHTML = `
+        <span class="meta-pill"><span class="material-symbols-outlined" style="font-size:1rem">science</span>${escapeHtml(difficulty)}</span>
+        <span class="meta-pill"><span class="material-symbols-outlined" style="font-size:1rem">flag</span>${escapeHtml(status)}</span>
+        <span class="meta-pill"><span class="material-symbols-outlined" style="font-size:1rem">schedule</span>${escapeHtml(duration)} minutes</span>
+        <span class="meta-pill"><span class="material-symbols-outlined" style="font-size:1rem">calendar_today</span>${escapeHtml(started)}</span>
+      `;
+      document.getElementById('detailStats').innerHTML = `
+        <div class="mini-card">
+          <div class="num" style="color:var(--primary)">${escapeHtml(score)}%</div>
+          <div class="lbl">Overall Score</div>
+        </div>
+        <div class="mini-card">
+          <div class="num" style="color:var(--green)">${escapeHtml(duration)}m</div>
+          <div class="lbl">Duration</div>
+        </div>
+        <div class="mini-card">
+          <div class="num" style="color:var(--amber)">${escapeHtml(status)}</div>
+          <div class="lbl">Status</div>
+        </div>
+      `;
+
+      const timeline = document.getElementById('detailTimeline');
+      timeline.innerHTML = `
+        <div class="timeline-empty" style="opacity:.8">Loading messages...</div>
+      `;
+
+      try {
+        const response = await fetch(`/interview/history/${sessionId}/`);
+        const data = await response.json();
+
+        if (data.status !== 'success') {
+          timeline.innerHTML = `<div class="timeline-empty">Unable to load this session.</div>`;
+          document.getElementById('detailSummary').textContent = 'Failed to load transcript.';
+          return;
+        }
+
+        document.getElementById('detailRole').textContent = `${data.session.role} · ${data.session.difficulty}`;
+        document.getElementById('detailSummary').textContent = `Started on ${started}. ${data.session.total_questions} questions asked and ${data.session.correct_answers} good answers.`;
+        document.getElementById('detailHint').textContent = `${data.session.total_questions} questions, ${data.session.correct_answers} good answers`;
+        document.getElementById('detailStats').innerHTML = `
+          <div class="mini-card">
+            <div class="num" style="color:var(--primary)">${Math.round(data.session.overall_score)}%</div>
+            <div class="lbl">Overall Score</div>
+          </div>
+          <div class="mini-card">
+            <div class="num" style="color:var(--green)">${data.session.correct_answers}/${data.session.total_questions}</div>
+            <div class="lbl">Good Answers</div>
+          </div>
+          <div class="mini-card">
+            <div class="num" style="color:var(--amber)">${data.session.duration_minutes}m</div>
+            <div class="lbl">Duration</div>
+          </div>
+        `;
+
+        timeline.innerHTML = data.messages.map((msg, index) => renderMessageCard(msg, index)).join('');
+      } catch (error) {
+        timeline.innerHTML = `<div class="timeline-empty">${escapeHtml(error.message || 'Something went wrong.')}</div>`;
+        document.getElementById('detailSummary').textContent = 'Error loading transcript.';
+      }
+    }
+
+    const firstCard = document.querySelector('.session-card');
+    if (firstCard) {
+      loadSession(firstCard.dataset.sessionId, firstCard);
+    }
+
+    gsap.fromTo('.panel', { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: .5, stagger: .08, ease: 'power3.out' });
+  </script>
+</body>
+</html>
