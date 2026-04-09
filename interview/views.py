@@ -37,11 +37,6 @@ ROLE_DESCRIPTIONS = {
 @login_required
 def interview_home(request):
     """Render the interview chatbot page."""
-    # Get user's past interview sessions
-    past_sessions = InterviewSession.objects.filter(
-        user=request.user
-    ).order_by('-started_at')[:10]
-
     # Get active session if any
     active_session = InterviewSession.objects.filter(
         user=request.user,
@@ -60,7 +55,6 @@ def interview_home(request):
         avg_score = round(sum(scores) / len(scores), 1)
 
     context = {
-        'past_sessions': past_sessions,
         'active_session': active_session,
         'total_interviews': total_interviews,
         'avg_score': avg_score,
@@ -68,6 +62,29 @@ def interview_home(request):
         'difficulty_choices': InterviewSession.DIFFICULTY_CHOICES,
     }
     return render(request, 'interview/interview.html', context)
+
+
+@login_required
+def recent_sessions(request):
+    """Render a dedicated page for browsing recent interview sessions."""
+    sessions = InterviewSession.objects.filter(user=request.user).order_by('-started_at')[:20]
+    active_session = InterviewSession.objects.filter(user=request.user, status='active').first()
+
+    completed = InterviewSession.objects.filter(user=request.user, status='completed')
+    avg_score = 0
+    if completed.exists():
+        scores = [s.overall_score for s in completed]
+        avg_score = round(sum(scores) / len(scores), 1)
+
+    context = {
+        'sessions': sessions,
+        'active_session': active_session,
+        'active_sessions': InterviewSession.objects.filter(user=request.user, status='active').count(),
+        'total_sessions': InterviewSession.objects.filter(user=request.user).count(),
+        'completed_sessions': completed.count(),
+        'avg_score': avg_score,
+    }
+    return render(request, 'interview/recent_sessions.html', context)
 
 
 @login_required
