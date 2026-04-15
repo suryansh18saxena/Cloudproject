@@ -45,7 +45,22 @@ INSTALLED_APPS = [
     'dashboard',
     'account',
     'interview',
+    'django_q',
 ]
+
+Q_CLUSTER = {
+    'name': 'cloud_project_q',
+    'workers': 4,
+    'recycle': 500,
+    'timeout': 300,
+    'retry': 360,
+    'compress': True,
+    'save_limit': 250,
+    'queue_limit': 500,
+    'cpu_affinity': 1,
+    'label': 'Django Q',
+    'orm': 'default'
+}
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
