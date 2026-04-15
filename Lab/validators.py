@@ -5,26 +5,18 @@ Each function checks a specific AWS task and returns a dict:
 """
 
 import boto3
-from datetime import datetime, timedelta
+from django.utils import timezone
+import os
 
-
-REGION = 'us-east-1'
-
-
-def _get_clients():
-    """Create boto3 clients."""
-    return {
-        'ct': boto3.client('cloudtrail', region_name=REGION),
-        'ec2': boto3.client('ec2', region_name=REGION),
-    }
+REGION = os.environ.get('AWS_DEFAULT_REGION', 'us-east-1')
 
 
 def check_ec2_launched(iam_username):
     """Check if the user launched an EC2 instance via CloudTrail."""
     try:
         ct = boto3.client('cloudtrail', region_name=REGION)
-        end_time = datetime.utcnow()
-        start_time = end_time - timedelta(hours=2)
+        end_time = timezone.now()
+        start_time = end_time - timezone.timedelta(hours=2)
 
         response = ct.lookup_events(
             LookupAttributes=[
@@ -70,6 +62,7 @@ def check_ec2_running(iam_username):
         response = ec2.describe_instances(
             Filters=[
                 {'Name': 'instance-state-name', 'Values': ['running']},
+                {'Name': 'tag:CreatedBy', 'Values': [iam_username]},
             ]
         )
 
@@ -150,31 +143,194 @@ def check_security_group(iam_username):
         }
 
 
-def validate_all_tasks(iam_username):
+def validate_ec2_tasks(iam_username):
     """
-    Run all validation checks and return a list of results.
-    Returns: list of {"task_name": str, "passed": bool, "details": str}
+    Run EC2 validation checks.
     """
-    # 1. Pehle saare individual checks run karein
     launched_result = check_ec2_launched(iam_username)
     running_result = check_ec2_running(iam_username)
     sg_result = check_security_group(iam_username)
 
-    # 2. SMART BYPASS FOR CLOUDTRAIL DELAY
-    # Agar instance running hai, par CloudTrail log abhi tak nahi aaya, 
-    # toh hum Launch wale task ko automatically Pass kar denge.
-    if running_result['passed'] and not launched_result['passed']:
-        launched_result['passed'] = True
-        launched_result['details'] = "Running instance detected. Bypassing AWS CloudTrail delay to verify launch."
+    # Removed bypass logic or implement a secure one if needed
+    # But as requested by Task 1 Step 5: "usko hata dein"
+    return [launched_result, running_result, sg_result]
 
-    # 3. Final results return karein
-    results = [
-        launched_result,
-        running_result,
-        sg_result,
-    ]
+
+def validate_s3_tasks(iam_username):
+    """Run S3 validation checks."""
+    s3 = boto3.client('s3', region_name=REGION)
+    results = []
     
+    # Bucket Creation
+    try:
+        response = s3.list_buckets()
+        buckets = response.get('Buckets', [])
+        
+        # Read tags to match CreatedBy
+        student_bucket = None
+        for b in buckets:
+            try:
+                tags = s3.get_bucket_tagging(Bucket=b['Name'])
+                for tag in tags.get('TagSet', []):
+                    if tag['Key'] == 'CreatedBy' and tag['Value'] == iam_username:
+                        student_bucket = b['Name']
+                        break
+                if student_bucket:
+                    break
+            except Exception:
+                pass
+            
+        if student_bucket:
+            results.append({'task_name': 'Bucket Creation', 'passed': True, 'details': f"Bucket found: {student_bucket}"})
+        else:
+            results.append({'task_name': 'Bucket Creation', 'passed': False, 'details': 'No buckets found.'})
+            return results # Return early if no bucket
+            
+    except Exception as e:
+        results.append({'task_name': 'Bucket Creation', 'passed': False, 'details': str(e)})
+        return results
+
+    # Versioning
+    try:
+        vers = s3.get_bucket_versioning(Bucket=student_bucket)
+        if vers.get('Status') == 'Enabled':
+            results.append({'task_name': 'Versioning', 'passed': True, 'details': 'Versioning is enabled.'})
+        else:
+            results.append({'task_name': 'Versioning', 'passed': False, 'details': 'Versioning is not enabled.'})
+    except Exception as e:
+        results.append({'task_name': 'Versioning', 'passed': False, 'details': str(e)})
+
+    # Bucket Policy
+    try:
+        s3.get_bucket_policy(Bucket=student_bucket)
+        results.append({'task_name': 'Bucket Policy', 'passed': True, 'details': 'Bucket policy is attached.'})
+    except Exception as e:
+        results.append({'task_name': 'Bucket Policy', 'passed': False, 'details': 'No bucket policy found.'})
+
+    # Block Public Access
+    try:
+        bpa = s3.get_public_access_block(Bucket=student_bucket)
+        config = bpa.get('PublicAccessBlockConfiguration', {})
+        if config.get('BlockPublicAcls') and config.get('BlockPublicPolicy'):
+            results.append({'task_name': 'Block Public Access', 'passed': True, 'details': 'Public access is blocked.'})
+        else:
+            results.append({'task_name': 'Block Public Access', 'passed': False, 'details': 'Public access is not fully blocked.'})
+    except Exception as e:
+        results.append({'task_name': 'Block Public Access', 'passed': False, 'details': 'Block public access not configured.'})
+
+    # Upload
+    try:
+        objs = s3.list_objects_v2(Bucket=student_bucket)
+        if objs.get('KeyCount', 0) > 0:
+            results.append({'task_name': 'Upload', 'passed': True, 'details': f"Objects found: {objs['KeyCount']}"})
+        else:
+            results.append({'task_name': 'Upload', 'passed': False, 'details': 'Bucket is empty.'})
+    except Exception as e:
+        results.append({'task_name': 'Upload', 'passed': False, 'details': str(e)})
+
     return results
+
+
+def validate_vpc_tasks(iam_username):
+    """Run VPC validation checks."""
+    ec2 = boto3.client('ec2', region_name=REGION)
+    results = []
+    
+    # 1. VPC Creation (Look for a non-default VPC)
+    vpc_id = None
+    try:
+        response = ec2.describe_vpcs(Filters=[{'Name': 'tag:CreatedBy', 'Values': [iam_username]}])
+        vpcs = response.get('Vpcs', [])
+        if vpcs:
+            vpc_id = vpcs[0]['VpcId']
+            results.append({'task_name': 'VPC Creation', 'passed': True, 'details': f"VPC found: {vpc_id}"})
+        else:
+            results.append({'task_name': 'VPC Creation', 'passed': False, 'details': 'No non-default VPC found.'})
+            return results # Can't proceed without VPC
+    except Exception as e:
+        results.append({'task_name': 'VPC Creation', 'passed': False, 'details': str(e)})
+        return results
+
+    # 2. Subnets
+    try:
+        response = ec2.describe_subnets(Filters=[{'Name': 'vpc-id', 'Values': [vpc_id]}])
+        subnets = response.get('Subnets', [])
+        if len(subnets) >= 2:
+            results.append({'task_name': 'Subnets', 'passed': True, 'details': f"Found {len(subnets)} subnets."})
+        else:
+            results.append({'task_name': 'Subnets', 'passed': False, 'details': f"Found {len(subnets)} subnets (expected at least 2)."})
+    except Exception as e:
+        results.append({'task_name': 'Subnets', 'passed': False, 'details': str(e)})
+
+    # 3. Internet Gateway
+    igw_id = None
+    try:
+        response = ec2.describe_internet_gateways(Filters=[{'Name': 'attachment.vpc-id', 'Values': [vpc_id]}])
+        igws = response.get('InternetGateways', [])
+        if igws:
+            igw_id = igws[0]['InternetGatewayId']
+            results.append({'task_name': 'Internet Gateway', 'passed': True, 'details': f"IGW attached: {igw_id}"})
+        else:
+            results.append({'task_name': 'Internet Gateway', 'passed': False, 'details': 'No IGW attached to VPC.'})
+    except Exception as e:
+        results.append({'task_name': 'Internet Gateway', 'passed': False, 'details': str(e)})
+
+    # 4. Route Tables
+    rt_id = None
+    try:
+        response = ec2.describe_route_tables(Filters=[{'Name': 'vpc-id', 'Values': [vpc_id]}])
+        rts = [rt for rt in response.get('RouteTables', []) if not any(a.get('Main') for a in rt.get('Associations', []))]
+        if rts:
+            rt_id = rts[0]['RouteTableId']
+            results.append({'task_name': 'Route Tables', 'passed': True, 'details': f"Custom Route Table found: {rt_id}"})
+        else:
+            results.append({'task_name': 'Route Tables', 'passed': False, 'details': 'No custom route table found.'})
+    except Exception as e:
+        results.append({'task_name': 'Route Tables', 'passed': False, 'details': str(e)})
+
+    # 5. Route Association
+    try:
+        if rt_id:
+            response = ec2.describe_route_tables(Filters=[{'Name': 'route-table-id', 'Values': [rt_id]}])
+            associations = response['RouteTables'][0].get('Associations', [])
+            if any(not a.get('Main') for a in associations):
+                results.append({'task_name': 'Route Association', 'passed': True, 'details': 'Subnet is associated with route table.'})
+            else:
+                results.append({'task_name': 'Route Association', 'passed': False, 'details': 'No subnets associated with the custom route table.'})
+        else:
+            results.append({'task_name': 'Route Association', 'passed': False, 'details': 'Custom Route Table missing.'})
+    except Exception as e:
+        results.append({'task_name': 'Route Association', 'passed': False, 'details': str(e)})
+
+    # 6. IGW Routing
+    try:
+        if rt_id and igw_id:
+            response = ec2.describe_route_tables(Filters=[{'Name': 'route-table-id', 'Values': [rt_id]}])
+            routes = response['RouteTables'][0].get('Routes', [])
+            if any(r.get('GatewayId') == igw_id for r in routes):
+                results.append({'task_name': 'IGW Routing', 'passed': True, 'details': 'Route to IGW exists.'})
+            else:
+                results.append({'task_name': 'IGW Routing', 'passed': False, 'details': 'Missing route pointing to IGW.'})
+        else:
+            results.append({'task_name': 'IGW Routing', 'passed': False, 'details': 'Route Table or IGW missing.'})
+    except Exception as e:
+        results.append({'task_name': 'IGW Routing', 'passed': False, 'details': str(e)})
+
+    return results
+
+def validate_lab_tasks(lab_slug, iam_username):
+    """
+    Router to direct validation depending on the lab slug.
+    """
+    if lab_slug == 'ec2-launch-lab':
+        return validate_ec2_tasks(iam_username)
+    elif lab_slug == 's3-bucket-lab':
+        return validate_s3_tasks(iam_username)
+    elif lab_slug == 'vpc-networking-lab':
+        return validate_vpc_tasks(iam_username)
+    else:
+        return [{'task_name': 'Unknown Lab', 'passed': False, 'details': f'No validator for {lab_slug}'}]
+
 
 
 def calculate_score(validation_results):
