@@ -23,6 +23,8 @@ class UserProfile(models.Model):
 
     created_at = models.DateTimeField(auto_now_add=True)
 
+    is_teacher = models.BooleanField(default=False)
+
     def __str__(self):
         return f"Profile: {self.user.username}"
 
@@ -43,7 +45,29 @@ def create_user_profile(sender, instance, created, **kwargs):
         UserProfile.objects.create(user=instance)
 
 
-@receiver(post_save, sender=User)
-def save_user_profile(sender, instance, **kwargs):
-    if hasattr(instance, 'profile'):
-        instance.profile.save()
+
+
+
+class StudentActivityLog(models.Model):
+    """Tracks all student activities — logins, lab starts/ends, interview starts/ends."""
+
+    ACTIVITY_CHOICES = [
+        ('login', 'Login'),
+        ('lab_start', 'Lab Started'),
+        ('lab_end', 'Lab Ended'),
+        ('interview_start', 'Interview Started'),
+        ('interview_end', 'Interview Ended'),
+    ]
+
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='activity_logs')
+    activity_type = models.CharField(max_length=30, choices=ACTIVITY_CHOICES)
+    description = models.TextField(blank=True, default='')
+    metadata = models.JSONField(default=dict, blank=True, help_text="Extra context data")
+    timestamp = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.user.username} — {self.get_activity_type_display()} @ {self.timestamp:%b %d, %H:%M}"
+
+    class Meta:
+        ordering = ['-timestamp']
+        verbose_name_plural = 'Student Activity Logs'
