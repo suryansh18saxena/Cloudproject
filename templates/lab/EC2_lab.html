@@ -1,186 +1,624 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CloudLabX — EC2 Instance Launch Lab</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
-    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap"
+        rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+        rel="stylesheet" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        :root {
-            --bg: #06080f; --bg2: #0b1120; --surface: #111827; --surface2: #1a2438;
-            --primary: #7dd3fc; --primary-dim: #38bdf8; --primary-glow: rgba(125,211,252,0.15);
-            --accent: #c084fc; --accent2: #f472b6; --text: #e2e8f0;
-            --text-dim: #94a3b8; --text-muted: #64748b;
-            --border: rgba(125,211,252,0.08); --border-hover: rgba(125,211,252,0.2);
-            --glass2: rgba(26,36,56,0.65); --green: #22c55e; --red: #ef4444; --amber: #f59e0b;
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
-        body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; padding: 2rem; display: flex; justify-content: center; }
-        ::selection { background: var(--primary); color: var(--bg); }
+
+        :root {
+            --bg: #06080f;
+            --bg2: #0b1120;
+            --surface: #111827;
+            --surface2: #1a2438;
+            --primary: #7dd3fc;
+            --primary-dim: #38bdf8;
+            --primary-glow: rgba(125, 211, 252, 0.15);
+            --accent: #c084fc;
+            --accent2: #f472b6;
+            --text: #e2e8f0;
+            --text-dim: #94a3b8;
+            --text-muted: #64748b;
+            --border: rgba(125, 211, 252, 0.08);
+            --border-hover: rgba(125, 211, 252, 0.2);
+            --glass2: rgba(26, 36, 56, 0.65);
+            --green: #22c55e;
+            --red: #ef4444;
+            --amber: #f59e0b;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            padding: 2rem;
+            display: flex;
+            justify-content: center;
+        }
+
+        ::selection {
+            background: var(--primary);
+            color: var(--bg);
+        }
 
         /* Layout */
-        .lab-layout { display: grid; grid-template-columns: 1fr 380px; gap: 2rem; max-width: 1200px; width: 100%; align-items: start; }
+        .lab-layout {
+            display: grid;
+            grid-template-columns: 1fr 380px;
+            gap: 2rem;
+            max-width: 1200px;
+            width: 100%;
+            align-items: start;
+        }
 
         /* Left panel - Instructions */
         .lab-panel {
-            background: var(--glass2); backdrop-filter: blur(15px); border: 1px solid var(--border);
-            border-radius: 20px; padding: 2rem; position: sticky; top: 2rem;
+            background: var(--glass2);
+            backdrop-filter: blur(15px);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 2rem;
+            position: sticky;
+            top: 2rem;
         }
 
         /* Right panel - Controls */
         .control-panel {
-            display: flex; flex-direction: column; gap: 1.5rem; position: sticky; top: 2rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+            position: sticky;
+            top: 2rem;
         }
 
         .control-card {
-            background: var(--glass2); backdrop-filter: blur(15px); border: 1px solid var(--border);
-            border-radius: 16px; padding: 1.5rem;
+            background: var(--glass2);
+            backdrop-filter: blur(15px);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 1.5rem;
         }
 
         /* Back link */
-        .back-link { display: inline-flex; align-items: center; gap: .5rem; color: var(--text-dim); font-size: .85rem; font-weight: 600; text-decoration: none; margin-bottom: 1.5rem; transition: color .3s; }
-        .back-link:hover { color: var(--primary); }
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: .5rem;
+            color: var(--text-dim);
+            font-size: .85rem;
+            font-weight: 600;
+            text-decoration: none;
+            margin-bottom: 1.5rem;
+            transition: color .3s;
+        }
+
+        .back-link:hover {
+            color: var(--primary);
+        }
 
         /* Header */
-        .lab-header { margin-bottom: 1.5rem; padding-bottom: 1.5rem; border-bottom: 1px solid var(--border); }
-        .lab-title { font-size: 1.5rem; font-weight: 800; letter-spacing: -.5px; margin-bottom: .3rem; }
-        .lab-desc { font-size: .9rem; color: var(--text-dim); line-height: 1.6; }
+        .lab-header {
+            margin-bottom: 1.5rem;
+            padding-bottom: 1.5rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .lab-title {
+            font-size: 1.5rem;
+            font-weight: 800;
+            letter-spacing: -.5px;
+            margin-bottom: .3rem;
+        }
+
+        .lab-desc {
+            font-size: .9rem;
+            color: var(--text-dim);
+            line-height: 1.6;
+        }
 
         /* Sections */
-        .section-title { font-size: 1rem; font-weight: 700; margin-bottom: .75rem; display: flex; align-items: center; gap: .5rem; }
-        .section-title .material-symbols-outlined { font-size: 1.1rem; color: var(--primary); }
-        .section-content { font-size: .88rem; color: var(--text-dim); line-height: 1.7; margin-bottom: 1.5rem; }
-        .rules-list { list-style: none; padding: 0; margin-bottom: 1.5rem; }
-        .rules-list li { font-size: .85rem; color: var(--text-dim); padding: .4rem 0; display: flex; align-items: flex-start; gap: .5rem; }
-        .rules-list li::before { content: '•'; color: var(--primary); font-weight: 700; }
+        .section-title {
+            font-size: 1rem;
+            font-weight: 700;
+            margin-bottom: .75rem;
+            display: flex;
+            align-items: center;
+            gap: .5rem;
+        }
+
+        .section-title .material-symbols-outlined {
+            font-size: 1.1rem;
+            color: var(--primary);
+        }
+
+        .section-content {
+            font-size: .88rem;
+            color: var(--text-dim);
+            line-height: 1.7;
+            margin-bottom: 1.5rem;
+        }
+
+        .rules-list {
+            list-style: none;
+            padding: 0;
+            margin-bottom: 1.5rem;
+        }
+
+        .rules-list li {
+            font-size: .85rem;
+            color: var(--text-dim);
+            padding: .4rem 0;
+            display: flex;
+            align-items: flex-start;
+            gap: .5rem;
+        }
+
+        .rules-list li::before {
+            content: '•';
+            color: var(--primary);
+            font-weight: 700;
+        }
 
         /* Steps */
-        .steps-container { display: flex; flex-direction: column; gap: .75rem; margin-bottom: 1.5rem; }
-        .step-card { border: 1px solid var(--border); border-radius: 12px; overflow: hidden; transition: all .3s; cursor: pointer; }
-        .step-card.active { border-color: rgba(125,211,252,0.2); background: rgba(125,211,252,0.03); }
-        .step-header { padding: 1rem 1.2rem; display: flex; justify-content: space-between; align-items: center; }
-        .step-info { display: flex; align-items: center; gap: .75rem; }
-        .step-number {
-            font-size: .75rem; font-weight: 700; color: var(--bg); background: var(--text-muted);
-            width: 26px; height: 26px; border-radius: 50%; display: flex; align-items: center; justify-content: center; transition: background .3s;
+        .steps-container {
+            display: flex;
+            flex-direction: column;
+            gap: .75rem;
+            margin-bottom: 1.5rem;
         }
-        .step-card.active .step-number { background: linear-gradient(135deg, var(--primary), var(--accent)); }
-        .step-title-text { font-size: .9rem; font-weight: 600; color: var(--text-dim); transition: color .3s; }
-        .step-card.active .step-title-text { color: var(--primary); }
-        .expand-icon { font-size: 1rem; color: var(--text-muted); transition: transform .3s; }
-        .step-card.active .expand-icon { transform: rotate(180deg); color: var(--primary); }
-        .step-body { max-height: 0; overflow: hidden; transition: max-height .4s ease, padding .4s ease; padding: 0 1.2rem; }
-        .step-card.active .step-body { max-height: 400px; padding-bottom: 1.2rem; }
-        .step-body p { font-size: .85rem; color: var(--text-dim); line-height: 1.7; }
-        .step-hint { font-size: .8rem; color: var(--text-muted); margin-top: .5rem; font-style: italic; }
+
+        .step-card {
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            overflow: hidden;
+            transition: all .3s;
+            cursor: pointer;
+        }
+
+        .step-card.active {
+            border-color: rgba(125, 211, 252, 0.2);
+            background: rgba(125, 211, 252, 0.03);
+        }
+
+        .step-header {
+            padding: 1rem 1.2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .step-info {
+            display: flex;
+            align-items: center;
+            gap: .75rem;
+        }
+
+        .step-number {
+            font-size: .75rem;
+            font-weight: 700;
+            color: var(--bg);
+            background: var(--text-muted);
+            width: 26px;
+            height: 26px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background .3s;
+        }
+
+        .step-card.active .step-number {
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+        }
+
+        .step-title-text {
+            font-size: .9rem;
+            font-weight: 600;
+            color: var(--text-dim);
+            transition: color .3s;
+        }
+
+        .step-card.active .step-title-text {
+            color: var(--primary);
+        }
+
+        .expand-icon {
+            font-size: 1rem;
+            color: var(--text-muted);
+            transition: transform .3s;
+        }
+
+        .step-card.active .expand-icon {
+            transform: rotate(180deg);
+            color: var(--primary);
+        }
+
+        .step-body {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height .4s ease, padding .4s ease;
+            padding: 0 1.2rem;
+        }
+
+        .step-card.active .step-body {
+            max-height: 400px;
+            padding-bottom: 1.2rem;
+        }
+
+        .step-body p {
+            font-size: .85rem;
+            color: var(--text-dim);
+            line-height: 1.7;
+        }
+
+        .step-hint {
+            font-size: .8rem;
+            color: var(--text-muted);
+            margin-top: .5rem;
+            font-style: italic;
+        }
 
         /* Progress */
-        .progress-wrapper { margin-bottom: 1.5rem; }
-        .progress-text { font-size: .8rem; font-weight: 600; color: var(--text-muted); margin-bottom: .4rem; }
-        .progress-container { height: 6px; background: var(--surface); border-radius: 10px; overflow: hidden; }
-        .progress-bar { height: 100%; background: linear-gradient(90deg, var(--primary), var(--accent)); width: 25%; transition: width .4s ease; border-radius: 10px; }
+        .progress-wrapper {
+            margin-bottom: 1.5rem;
+        }
+
+        .progress-text {
+            font-size: .8rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            margin-bottom: .4rem;
+        }
+
+        .progress-container {
+            height: 6px;
+            background: var(--surface);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary), var(--accent));
+            width: 25%;
+            transition: width .4s ease;
+            border-radius: 10px;
+        }
 
         /* Timer */
         .timer-box {
-            background: linear-gradient(135deg, rgba(125,211,252,0.08), rgba(192,132,252,0.05));
-            border: 1px solid var(--border); border-radius: 16px; padding: 1.5rem; text-align: center;
+            background: linear-gradient(135deg, rgba(125, 211, 252, 0.08), rgba(192, 132, 252, 0.05));
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 1.5rem;
+            text-align: center;
         }
-        .timer-label { font-size: .7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 2px; color: var(--text-muted); margin-bottom: .5rem; }
+
+        .timer-label {
+            font-size: .7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: var(--text-muted);
+            margin-bottom: .5rem;
+        }
+
         .timer-display {
-            font-family: 'JetBrains Mono', monospace; font-size: 2.8rem; font-weight: 700;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 2.8rem;
+            font-weight: 700;
             background: linear-gradient(135deg, var(--primary), var(--accent));
-            -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
         }
-        .timer-display.warning { background: linear-gradient(135deg, var(--amber), var(--red)); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
-        .timer-sub { font-size: .75rem; color: var(--text-muted); margin-top: .3rem; }
+
+        .timer-display.warning {
+            background: linear-gradient(135deg, var(--amber), var(--red));
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .timer-sub {
+            font-size: .75rem;
+            color: var(--text-muted);
+            margin-top: .3rem;
+        }
 
         /* Credentials */
-        .cred-box { border: 1px solid rgba(34,197,94,0.15); border-radius: 12px; padding: 1.2rem; background: rgba(34,197,94,0.03); }
-        .cred-title { font-size: .8rem; font-weight: 700; color: var(--green); margin-bottom: .75rem; display: flex; align-items: center; gap: .4rem; }
-        .cred-item { display: flex; justify-content: space-between; align-items: center; padding: .4rem 0; font-size: .8rem; }
-        .cred-label { color: var(--text-muted); font-weight: 600; }
-        .cred-value { color: var(--text); font-family: 'JetBrains Mono', monospace; font-size: .78rem; }
-        .cred-link { display: block; margin-top: .75rem; text-align: center; }
-        .cred-link a {
-            display: inline-flex; align-items: center; gap: .4rem;
-            background: linear-gradient(135deg, var(--primary), var(--primary-dim));
-            color: var(--bg); padding: .5rem 1.2rem; border-radius: 10px;
-            font-size: .82rem; font-weight: 700; text-decoration: none; transition: all .3s;
+        .cred-box {
+            border: 1px solid rgba(34, 197, 94, 0.15);
+            border-radius: 12px;
+            padding: 1.2rem;
+            background: rgba(34, 197, 94, 0.03);
         }
-        .cred-link a:hover { transform: translateY(-2px); box-shadow: 0 6px 20px var(--primary-glow); }
+
+        .cred-title {
+            font-size: .8rem;
+            font-weight: 700;
+            color: var(--green);
+            margin-bottom: .75rem;
+            display: flex;
+            align-items: center;
+            gap: .4rem;
+        }
+
+        .cred-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: .4rem 0;
+            font-size: .8rem;
+        }
+
+        .cred-label {
+            color: var(--text-muted);
+            font-weight: 600;
+        }
+
+        .cred-value {
+            color: var(--text);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: .78rem;
+        }
+
+        .cred-link {
+            display: block;
+            margin-top: .75rem;
+            text-align: center;
+        }
+
+        .cred-link a {
+            display: inline-flex;
+            align-items: center;
+            gap: .4rem;
+            background: linear-gradient(135deg, var(--primary), var(--primary-dim));
+            color: var(--bg);
+            padding: .5rem 1.2rem;
+            border-radius: 10px;
+            font-size: .82rem;
+            font-weight: 700;
+            text-decoration: none;
+            transition: all .3s;
+        }
+
+        .cred-link a:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px var(--primary-glow);
+        }
 
         /* Buttons */
         .btn {
-            border: none; border-radius: 12px; padding: .75rem 1.5rem; font-size: .9rem;
-            font-weight: 700; cursor: pointer; transition: all .3s; display: inline-flex;
-            align-items: center; justify-content: center; gap: .5rem; width: 100;
+            border: none;
+            border-radius: 12px;
+            padding: .75rem 1.5rem;
+            font-size: .9rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all .3s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: .5rem;
+            width: 100;
             font-family: 'Inter', sans-serif;
         }
+
         .btn-start {
             background: linear-gradient(135deg, var(--primary), var(--primary-dim));
-            color: var(--bg); box-shadow: 0 4px 15px var(--primary-glow); width: 100%;
+            color: var(--bg);
+            box-shadow: 0 4px 15px var(--primary-glow);
+            width: 100%;
         }
-        .btn-start:hover { transform: translateY(-2px); box-shadow: 0 8px 25px var(--primary-glow); }
-        .btn-start:disabled { opacity: .6; cursor: not-allowed; transform: none; }
+
+        .btn-start:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px var(--primary-glow);
+        }
+
+        .btn-start:disabled {
+            opacity: .6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
         .btn-submit {
             background: linear-gradient(135deg, var(--green), #16a34a);
-            color: #fff; box-shadow: 0 4px 15px rgba(34,197,94,0.2); width: 100%;
+            color: #fff;
+            box-shadow: 0 4px 15px rgba(34, 197, 94, 0.2);
+            width: 100%;
         }
-        .btn-submit:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(34,197,94,0.3); }
-        .btn-submit:disabled { opacity: .6; cursor: not-allowed; transform: none; }
+
+        .btn-submit:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(34, 197, 94, 0.3);
+        }
+
+        .btn-submit:disabled {
+            opacity: .6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
         .btn-end {
-            background: rgba(239,68,68,0.1); color: var(--red); border: 1px solid rgba(239,68,68,0.2); width: 100%;
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--red);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+            width: 100%;
         }
-        .btn-end:hover { background: rgba(239,68,68,0.2); }
-        .btn-end:disabled { opacity: .6; cursor: not-allowed; transform: none; }
+
+        .btn-end:hover {
+            background: rgba(239, 68, 68, 0.2);
+        }
+
+        .btn-end:disabled {
+            opacity: .6;
+            cursor: not-allowed;
+            transform: none;
+        }
 
         /* Score Result */
         .score-result {
-            border-radius: 16px; padding: 1.5rem; text-align: center;
+            border-radius: 16px;
+            padding: 1.5rem;
+            text-align: center;
         }
-        .score-result.pass { background: rgba(34,197,94,0.05); border: 1px solid rgba(34,197,94,0.15); }
-        .score-result.fail { background: rgba(239,68,68,0.05); border: 1px solid rgba(239,68,68,0.15); }
-        .score-big { font-size: 3rem; font-weight: 900; margin: .5rem 0; }
-        .score-big.pass { color: var(--green); }
-        .score-big.fail { color: var(--red); }
-        .score-label { font-size: .8rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 1px; }
-        .score-details { margin-top: 1rem; }
-        .score-task { display: flex; justify-content: space-between; align-items: center; padding: .5rem 0; border-bottom: 1px solid var(--border); font-size: .82rem; }
-        .score-task:last-child { border-bottom: none; }
-        .score-task-name { color: var(--text-dim); }
-        .score-task-status { font-weight: 700; }
-        .score-task-status.pass { color: var(--green); }
-        .score-task-status.fail { color: var(--red); }
+
+        .score-result.pass {
+            background: rgba(34, 197, 94, 0.05);
+            border: 1px solid rgba(34, 197, 94, 0.15);
+        }
+
+        .score-result.fail {
+            background: rgba(239, 68, 68, 0.05);
+            border: 1px solid rgba(239, 68, 68, 0.15);
+        }
+
+        .score-big {
+            font-size: 3rem;
+            font-weight: 900;
+            margin: .5rem 0;
+        }
+
+        .score-big.pass {
+            color: var(--green);
+        }
+
+        .score-big.fail {
+            color: var(--red);
+        }
+
+        .score-label {
+            font-size: .8rem;
+            color: var(--text-muted);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .score-details {
+            margin-top: 1rem;
+        }
+
+        .score-task {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: .5rem 0;
+            border-bottom: 1px solid var(--border);
+            font-size: .82rem;
+        }
+
+        .score-task:last-child {
+            border-bottom: none;
+        }
+
+        .score-task-name {
+            color: var(--text-dim);
+        }
+
+        .score-task-status {
+            font-weight: 700;
+        }
+
+        .score-task-status.pass {
+            color: var(--green);
+        }
+
+        .score-task-status.fail {
+            color: var(--red);
+        }
 
         /* Validation output */
         .validation-output {
-            background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
-            padding: 1rem; font-family: 'JetBrains Mono', monospace; font-size: .78rem;
-            color: var(--green); white-space: pre-wrap; max-height: 200px; overflow-y: auto;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1rem;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: .78rem;
+            color: var(--green);
+            white-space: pre-wrap;
+            max-height: 200px;
+            overflow-y: auto;
         }
 
         /* Status indicator */
         .status-badge {
-            display: inline-flex; align-items: center; gap: .4rem; padding: 4px 10px;
-            border-radius: 50px; font-size: .7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;
+            display: inline-flex;
+            align-items: center;
+            gap: .4rem;
+            padding: 4px 10px;
+            border-radius: 50px;
+            font-size: .7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
         }
-        .status-badge.active { background: rgba(34,197,94,0.1); color: var(--green); }
-        .status-badge .pulse-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); animation: pulse 2s infinite; }
-        @keyframes pulse { 0%,100% { opacity: 1; transform: scale(1); } 50% { opacity: .4; transform: scale(.8); } }
+
+        .status-badge.active {
+            background: rgba(34, 197, 94, 0.1);
+            color: var(--green);
+        }
+
+        .status-badge .pulse-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--green);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+
+            50% {
+                opacity: .4;
+                transform: scale(.8);
+            }
+        }
 
         /* Hidden */
-        .hidden { display: none !important; }
+        .hidden {
+            display: none !important;
+        }
 
         /* Responsive */
         @media(max-width:900px) {
-            .lab-layout { grid-template-columns: 1fr; }
-            .control-panel { position: static; }
-            .lab-panel { position: static; }
+            .lab-layout {
+                grid-template-columns: 1fr;
+            }
+
+            .control-panel {
+                position: static;
+            }
+
+            .lab-panel {
+                position: static;
+            }
         }
     </style>
 </head>
+
 <body>
     <div class="lab-layout">
         <!-- LEFT: Instructions Panel -->
@@ -191,11 +629,14 @@
 
             <header class="lab-header">
                 <h1 class="lab-title">EC2 Instance Launch Lab</h1>
-                <p class="lab-desc">Learn how to launch and configure an EC2 instance with proper security settings on AWS.</p>
+                <p class="lab-desc">Learn how to launch and configure an EC2 instance with proper security settings on
+                    AWS.</p>
             </header>
 
             <div class="section-title"><span class="material-symbols-outlined">flag</span> Objective</div>
-            <p class="section-content">By the end of this lab, you will be able to launch an EC2 instance in a specified region, configure a security group to allow inbound SSH access, and verify that the instance is running correctly.</p>
+            <p class="section-content">By the end of this lab, you will be able to launch an EC2 instance in a specified
+                region, configure a security group to allow inbound SSH access, and verify that the instance is running
+                correctly.</p>
 
             <div class="section-title"><span class="material-symbols-outlined">gavel</span> Rules</div>
             <ul class="rules-list">
@@ -215,7 +656,9 @@
                         <span class="expand-icon material-symbols-outlined">expand_more</span>
                     </header>
                     <div class="step-body">
-                        <p>Navigate to the EC2 service in the AWS Console. Click 'Launch instances' and enter a name. Select 'Amazon Linux 2' for the AMI and set the instance type to <code>t2.micro</code>. Ensure the default VPC and a public subnet are selected.</p>
+                        <p>Navigate to the EC2 service in the AWS Console. Click 'Launch instances' and enter a name.
+                            Select 'Amazon Linux 2' for the AMI and set the instance type to <code>t2.micro</code>.
+                            Ensure the default VPC and a public subnet are selected.</p>
                         <p class="step-hint">💡 Remember to select the specific key pair provided.</p>
                     </div>
                 </article>
@@ -229,7 +672,9 @@
                         <span class="expand-icon material-symbols-outlined">expand_more</span>
                     </header>
                     <div class="step-body">
-                        <p>In the Network settings section, create a new security group. Add a single inbound rule to allow SSH traffic (port 22) with the source set to 'My IP'. Give it a descriptive name like 'ssh-access'.</p>
+                        <p>In the Network settings section, create a new security group. Add a single inbound rule to
+                            allow SSH traffic (port 22) with the source set to 'My IP'. Give it a descriptive name like
+                            'ssh-access'.</p>
                     </div>
                 </article>
 
@@ -242,7 +687,8 @@
                         <span class="expand-icon material-symbols-outlined">expand_more</span>
                     </header>
                     <div class="step-body">
-                        <p>Expand the 'Advanced details' section. In the 'IAM instance profile' dropdown, select the IAM role provided for this lab.</p>
+                        <p>Expand the 'Advanced details' section. In the 'IAM instance profile' dropdown, select the IAM
+                            role provided for this lab.</p>
                     </div>
                 </article>
 
@@ -255,7 +701,8 @@
                         <span class="expand-icon material-symbols-outlined">expand_more</span>
                     </header>
                     <div class="step-body">
-                        <p>Click 'Launch instance'. Navigate to the EC2 instances list and wait for your instance status to become <span style="color:var(--green);font-weight:600">running</span>.</p>
+                        <p>Click 'Launch instance'. Navigate to the EC2 instances list and wait for your instance status
+                            to become <span style="color:var(--green);font-weight:600">running</span>.</p>
                     </div>
                 </article>
             </div>
@@ -305,7 +752,8 @@
                     <span class="material-symbols-outlined" style="font-size:1.1rem">check_circle</span> Submit Lab
                 </button>
                 <button class="btn btn-end hidden" id="end-btn" onclick="endLab()" style="margin-top:.75rem">
-                    <span class="material-symbols-outlined" style="font-size:1.1rem">stop_circle</span> End Lab & Cleanup
+                    <span class="material-symbols-outlined" style="font-size:1.1rem">stop_circle</span> End Lab &
+                    Cleanup
                 </button>
             </div>
 
@@ -325,7 +773,7 @@
     </div>
 
 
-<script>
+    <script>
         // ========== ACCORDION ==========
         document.addEventListener('DOMContentLoaded', () => {
             const stepCards = document.querySelectorAll('.step-card');
@@ -343,35 +791,79 @@
                 });
             });
 
-            // Page reload par current state database se fetch karega
-            checkCurrentLabStatus(); 
+            checkCurrentLabStatus();
         });
+
+        // 🔥 FOOLPROOF URL GENERATOR 🔥
+        // Yeh browser se exact URL uthayega aur API call ko hamesha sahi jagah bhejega
+        function getApiUrl(action) {
+            let path = window.location.pathname;
+            if (!path.endsWith('/')) {
+                path += '/';
+            }
+            return path + action + '/';
+        }
 
         // ========== PAGE RELOAD STATUS CHECK ==========
         async function checkCurrentLabStatus() {
             try {
-                const response = await fetch('/Lab/status/', { 
+                const response = await fetch(getApiUrl('status'), {
                     method: 'GET',
                     headers: { 'X-Requested-With': 'XMLHttpRequest' }
                 });
                 const data = await response.json();
 
-                // 'active' ho ya 'submitted', dono case mein hum credentials aur timer dikhayenge
                 if (data.status === 'active' || data.status === 'submitted') {
                     showActiveState(data.credentials, data.timer_expires_at);
-                    
                     if (data.status === 'submitted') {
                         updateStatus('✅ Lab was submitted previously. You can perform tasks and validate again!');
                     }
                 } else if (data.status === 'provisioning') {
                     const btn = document.getElementById('start-btn');
-                    btn.textContent = '⏳ Provisioning Lab...';
+                    btn.innerHTML = '<span class="material-symbols-outlined spinning">sync</span> Provisioning...';
                     btn.disabled = true;
-                    updateStatus('🔄 Lab is currently provisioning. Please wait...');
+                    updateStatus('🔄 Lab is currently provisioning in the background. Please wait...');
+                    setTimeout(checkCurrentLabStatus, 5000);
+                } else if (data.status === 'destroying') {
+                    const btn = document.getElementById('end-btn');
+                    btn.innerHTML = '<span class="material-symbols-outlined spinning">sync</span> Destroying...';
+                    btn.disabled = true;
+                    updateStatus('🧹 Destroying lab resources in the background. Please wait...');
+                    setTimeout(checkCurrentLabStatus, 5000);
+                } else if (data.status === 'ended') {
+                    // Destroy completed — reset UI to Start Lab
+                    if (timerInterval) clearInterval(timerInterval);
+                    document.getElementById('timer-card').classList.add('hidden');
+                    document.getElementById('cred-card').classList.add('hidden');
+                    document.getElementById('score-card').classList.add('hidden');
+                    document.getElementById('submit-btn').classList.add('hidden');
+                    document.getElementById('end-btn').classList.add('hidden');
+
+                    const btn = document.getElementById('start-btn');
+                    btn.innerHTML = '<span class="material-symbols-outlined" style="font-size:1.1rem">play_arrow</span> Start Lab';
+                    btn.disabled = false;
+                    btn.classList.remove('hidden');
+
+                    updateStatus('Ready to start!');
                 } else if (data.status === 'expired') {
                     updateStatus('⏰ Lab timer expired! Please end the lab.');
                     document.getElementById('start-btn').classList.add('hidden');
                     document.getElementById('end-btn').classList.remove('hidden');
+                } else if (data.status === 'no_session' || data.status === 'no_lab') {
+                    // No session — reset everything to Start Lab
+                    if (timerInterval) clearInterval(timerInterval);
+                    document.getElementById('timer-card').classList.add('hidden');
+                    document.getElementById('cred-card').classList.add('hidden');
+                    document.getElementById('score-card').classList.add('hidden');
+                    document.getElementById('submit-btn').classList.add('hidden');
+                    document.getElementById('end-btn').classList.add('hidden');
+
+                    const btn = document.getElementById('start-btn');
+                    btn.innerHTML = '<span class="material-symbols-outlined" style="font-size:1.1rem">play_arrow</span> Start Lab';
+                    btn.disabled = false;
+                    btn.classList.remove('hidden');
+
+                    updateStatus('✅ Ready to start');
                 }
             } catch (error) {
                 console.error("Error fetching lab status:", error);
@@ -387,8 +879,6 @@
             timerCard.classList.remove('hidden');
 
             const expiry = new Date(expiresAt).getTime();
-
-            // Agar pehle se koi timer chal raha hai toh usko clear karein (to avoid double speeding)
             if (timerInterval) clearInterval(timerInterval);
 
             timerInterval = setInterval(() => {
@@ -400,7 +890,7 @@
                     timerDisplay.textContent = '00:00';
                     timerDisplay.classList.add('warning');
                     updateStatus('⏰ Lab timer expired! Submit your work.');
-                    submitLab(); // Auto-submit
+                    submitLab();
                     return;
                 }
 
@@ -424,16 +914,13 @@
         }
 
         function showActiveState(credentials, timerExpiresAt) {
-            // Show credentials
             document.getElementById('cred-card').classList.remove('hidden');
             document.getElementById('cred-user').textContent = credentials.iam_user_name;
             document.getElementById('cred-pass').textContent = credentials.console_password;
             document.getElementById('cred-url').href = credentials.console_login_link;
 
-            // Show timer
             startTimer(timerExpiresAt);
 
-            // Toggle buttons
             document.getElementById('start-btn').classList.add('hidden');
             document.getElementById('submit-btn').classList.remove('hidden');
             document.getElementById('end-btn').classList.remove('hidden');
@@ -458,13 +945,17 @@
             updateStatus('🔄 Running Terraform... This may take 1-2 minutes.');
 
             try {
-                const response = await fetch('/Lab/start/', {
+                const response = await fetch(getApiUrl('start'), {
                     method: 'POST',
                     headers: { 'X-CSRFToken': getCookie('csrftoken') }
                 });
                 const data = await response.json();
 
-                if (data.status === 'success') {
+                if (data.status === 'provisioning') {
+                    btn.innerHTML = '<span class="material-symbols-outlined spinning">sync</span> Provisioning...';
+                    updateStatus('🔄 Lab is currently provisioning. Please wait...');
+                    checkCurrentLabStatus();
+                } else if (data.status === 'success') {
                     showActiveState(data.credentials, data.timer_expires_at);
                 } else {
                     alert('Error: ' + data.message);
@@ -487,7 +978,7 @@
             updateStatus('🔍 Checking your AWS activities via Boto3...');
 
             try {
-                const response = await fetch('/Lab/submit/', {
+                const response = await fetch(getApiUrl('submit'), {
                     method: 'POST',
                     headers: { 'X-CSRFToken': getCookie('csrftoken') }
                 });
@@ -495,11 +986,8 @@
 
                 if (data.status === 'success') {
                     showScore(data);
-                    
-                    // Button ko wapas normal state me layenge taaki dobara click ho sake
                     btn.innerHTML = '<span class="material-symbols-outlined" style="font-size:1.1rem">check_circle</span> Submit Lab';
                     btn.disabled = false;
-                    
                     updateStatus('📊 Score generated. You can fix tasks and validate again, or click "End Lab" to cleanup.');
                 } else {
                     alert('Error: ' + data.message);
@@ -536,7 +1024,6 @@
                     <div style="font-size:.85rem;color:var(--text-dim)">${score.passed_tasks}/${score.total_tasks} tasks passed</div>
                     <div class="score-details">${tasksHtml}</div>
                 </div>`;
-
             card.classList.remove('hidden');
         }
 
@@ -546,38 +1033,35 @@
             const btn = document.getElementById('end-btn');
             btn.textContent = '⏳ Cleaning up...';
             btn.disabled = true;
-            
-            // Validate button ko bhi disable kardo cleanup ke time
             document.getElementById('submit-btn').disabled = true;
-            
+
             updateStatus('🧹 Running cleanup + terraform destroy...');
 
             try {
-                const response = await fetch('/Lab/end/', {
+                const response = await fetch(getApiUrl('end'), {
                     method: 'POST',
                     headers: { 'X-CSRFToken': getCookie('csrftoken') }
                 });
                 const data = await response.json();
 
-                if (data.status === 'success') {
+                if (data.status === 'destroying') {
                     if (timerInterval) clearInterval(timerInterval);
+                    updateStatus('🧹 Resources are being destroyed in background. Please wait...');
+                    checkCurrentLabStatus();
+                } else if (data.status === 'success') {
+                    if (timerInterval) clearInterval(timerInterval);
+                    if (data.score) showScore({ score: data.score, tasks: [] });
 
-                    if (data.score) {
-                        showScore({ score: data.score, tasks: [] });
-                    }
-
-                    updateStatus('✅ Lab ended. All resources destroyed. Score saved!');
-
-                    btn.classList.add('hidden');
-                    document.getElementById('submit-btn').classList.add('hidden');
+                    updateStatus('✅ Lab ended. All resources destroyed. Ready to start again!');
                     document.getElementById('timer-card').classList.add('hidden');
+                    document.getElementById('cred-card').classList.add('hidden');
+                    document.getElementById('submit-btn').classList.add('hidden');
+                    btn.classList.add('hidden');
 
-                    document.getElementById('action-card').innerHTML = `
-                        <a href="/dashboard/" style="text-decoration:none">
-                            <button class="btn btn-start" style="width:100%">
-                                <span class="material-symbols-outlined" style="font-size:1.1rem">dashboard</span> Go to Dashboard
-                            </button>
-                        </a>`;
+                    const startBtn = document.getElementById('start-btn');
+                    startBtn.innerHTML = '<span class="material-symbols-outlined" style="font-size:1.1rem">play_arrow</span> Start Lab';
+                    startBtn.disabled = false;
+                    startBtn.classList.remove('hidden');
                 } else {
                     alert('Error: ' + data.message);
                     btn.innerHTML = '<span class="material-symbols-outlined" style="font-size:1.1rem">stop_circle</span> End Lab & Cleanup';
@@ -593,4 +1077,5 @@
         }
     </script>
 </body>
+
 </html>
