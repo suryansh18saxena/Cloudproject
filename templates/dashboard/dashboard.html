@@ -1227,11 +1227,15 @@
     <nav class="sidebar-nav">
       <div class="nav-label">Main</div>
       <a class="nav-item active" href="{% url 'dashboard' %}"><span class="material-symbols-outlined">dashboard</span>Dashboard</a>
-      <a class="nav-item" href="{% url 'EC2_Lab' %}"><span class="material-symbols-outlined">science</span>Labs<span class="nav-badge"
+      <a class="nav-item" href="{% url 'dashboard' %}#labs"><span class="material-symbols-outlined">science</span>Labs<span class="nav-badge"
           style="background:rgba(125,211,252,0.1);color:var(--primary)">{{ available_labs|length }}</span></a>
       <a class="nav-item" href="{% url 'interview_home' %}"><span class="material-symbols-outlined">forum</span>Interview Prep<span class="nav-badge" style="background:rgba(192,132,252,0.1);color:var(--accent)">AI</span></a>
       <a class="nav-item" href="#"><span class="material-symbols-outlined">trending_up</span>My Progress</a>
       <a class="nav-item" href="#"><span class="material-symbols-outlined">analytics</span>Analytics</a>
+      {% if user.profile.is_teacher %}
+      <div class="nav-label" style="margin-top:1.5rem">Teacher</div>
+      <a class="nav-item" href="{% url 'teacher_dashboard' %}" style="color:var(--amber)"><span class="material-symbols-outlined">school</span>Teacher Panel<span class="nav-badge" style="background:rgba(245,158,11,0.1);color:var(--amber)">👨‍🏫</span></a>
+      {% endif %}
       <div class="nav-label" style="margin-top:1.5rem">Account</div>
       <a class="nav-item" href="#"><span class="material-symbols-outlined">settings</span>Settings</a>
       <a class="nav-item" href="{% url 'logout' %}"><span class="material-symbols-outlined">logout</span>Logout</a>
@@ -1338,7 +1342,7 @@
           </div>
         </div>
         <div class="lab-actions">
-          <a href="{% url 'EC2_Lab' %}" style="text-decoration:none"><button class="btn-resume"><span class="material-symbols-outlined" style="font-size:1rem">play_arrow</span>
+          <a href="{% url 'lab_detail' slug=active_session.lab.slug %}" style="text-decoration:none"><button class="btn-resume"><span class="material-symbols-outlined" style="font-size:1rem">play_arrow</span>
             Resume Lab</button></a>
         </div>
       </div>
@@ -1366,7 +1370,7 @@
                 <h4>{{ lab.title }}</h4>
                 <p>{{ lab.description|truncatewords:15 }}</p>
               </div>
-              <a href="{% url 'EC2_Lab' %}" style="text-decoration:none">
+              <a href="{% url 'lab_detail' slug=lab.slug %}" style="text-decoration:none">
               <div class="lab-card-footer"><span class="lab-time"><span class="material-symbols-outlined"
                     style="font-size:.85rem">timer</span> {{ lab.duration_minutes }}m</span><button class="lab-start-btn">Start Lab</button>
               </div></a>
