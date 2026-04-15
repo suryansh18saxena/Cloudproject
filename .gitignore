@@ -3,3 +3,7 @@ db.sqlite3
 terraform.tfstate
 terraform.tfstate.backup
 .terraform.lock.hcl
+.env
+__pycache__/
+*.pyc
+.venv/

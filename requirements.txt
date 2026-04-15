@@ -1,18 +1,17 @@
 # Web Framework
 django>=4.2,<5.0
 
+# Environment variables
 python-dotenv
 
+# AWS SDK
 boto3
 
-psycopg2-binary
+# Background task queue (used in INSTALLED_APPS as 'django_q')
+django-q2
 
-django-crispy-forms
-crispy-bootstrap5
+# Gemini AI (used by the interview chatbot)
+google-generativeai
 
-celery
-redis
-
-djangorestframework
-
+# HTTP requests
 requests
