@@ -3,6 +3,8 @@ from django.contrib.auth import login, logout, authenticate
 from django.contrib.auth.models import User
 from django.contrib import messages
 
+from .models import StudentActivityLog
+
 
 def signup_view(request):
     if request.user.is_authenticated:
@@ -47,6 +49,14 @@ def signup_view(request):
         )
         login(request, user)
         messages.success(request, f'Welcome to CloudLabX, {first_name or username}!')
+
+        # Log signup/login activity
+        StudentActivityLog.objects.create(
+            user=user,
+            activity_type='login',
+            description=f'New account created and logged in.',
+        )
+
         return redirect('dashboard')
 
     return render(request, 'account/signup.html')
@@ -54,6 +64,10 @@ def signup_view(request):
 
 def login_view(request):
     if request.user.is_authenticated:
+        # Already logged in — redirect based on role
+        profile = getattr(request.user, 'profile', None)
+        if profile and profile.is_teacher:
+            return redirect('teacher_dashboard')
         return redirect('dashboard')
 
     if request.method == 'POST':
@@ -63,7 +77,20 @@ def login_view(request):
         user = authenticate(request, username=username, password=password)
         if user is not None:
             login(request, user)
-            # Redirect to 'next' URL if provided, else dashboard
+
+            # Log login activity
+            StudentActivityLog.objects.create(
+                user=user,
+                activity_type='login',
+                description=f'User logged in.',
+            )
+
+            # Route based on role: teacher → teacher_dashboard, student → dashboard
+            profile = getattr(user, 'profile', None)
+            if profile and profile.is_teacher:
+                return redirect('teacher_dashboard')
+
+            # Redirect to 'next' URL if provided, else student dashboard
             next_url = request.GET.get('next', 'dashboard')
             return redirect(next_url)
         else:
