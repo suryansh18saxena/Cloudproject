@@ -1,0 +1,1074 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CloudLabX — S3 Architecture Lab</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap"
+        rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+        rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg: #06080f;
+            --bg2: #0b1120;
+            --surface: #111827;
+            --surface2: #1a2438;
+            --primary: #7dd3fc;
+            --primary-dim: #38bdf8;
+            --primary-glow: rgba(125, 211, 252, 0.15);
+            --accent: #c084fc;
+            --accent2: #f472b6;
+            --text: #e2e8f0;
+            --text-dim: #94a3b8;
+            --text-muted: #64748b;
+            --border: rgba(125, 211, 252, 0.08);
+            --border-hover: rgba(125, 211, 252, 0.2);
+            --glass2: rgba(26, 36, 56, 0.65);
+            --green: #22c55e;
+            --red: #ef4444;
+            --amber: #f59e0b;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            padding: 2rem;
+            display: flex;
+            justify-content: center;
+        }
+
+        ::selection {
+            background: var(--primary);
+            color: var(--bg);
+        }
+
+        /* Layout */
+        .lab-layout {
+            display: grid;
+            grid-template-columns: 1fr 380px;
+            gap: 2rem;
+            max-width: 1200px;
+            width: 100%;
+            align-items: start;
+        }
+
+        /* Left panel - Instructions */
+        .lab-panel {
+            background: var(--glass2);
+            backdrop-filter: blur(15px);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 2rem;
+            position: sticky;
+            top: 2rem;
+        }
+
+        /* Right panel - Controls */
+        .control-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+            position: sticky;
+            top: 2rem;
+        }
+
+        .control-card {
+            background: var(--glass2);
+            backdrop-filter: blur(15px);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 1.5rem;
+        }
+
+        /* Back link */
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: .5rem;
+            color: var(--text-dim);
+            font-size: .85rem;
+            font-weight: 600;
+            text-decoration: none;
+            margin-bottom: 1.5rem;
+            transition: color .3s;
+        }
+
+        .back-link:hover {
+            color: var(--primary);
+        }
+
+        /* Header */
+        .lab-header {
+            margin-bottom: 1.5rem;
+            padding-bottom: 1.5rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .lab-title {
+            font-size: 1.5rem;
+            font-weight: 800;
+            letter-spacing: -.5px;
+            margin-bottom: .3rem;
+        }
+
+        .lab-desc {
+            font-size: .9rem;
+            color: var(--text-dim);
+            line-height: 1.6;
+        }
+
+        /* Sections */
+        .section-title {
+            font-size: 1rem;
+            font-weight: 700;
+            margin-bottom: .75rem;
+            display: flex;
+            align-items: center;
+            gap: .5rem;
+        }
+
+        .section-title .material-symbols-outlined {
+            font-size: 1.1rem;
+            color: var(--primary);
+        }
+
+        .section-content {
+            font-size: .88rem;
+            color: var(--text-dim);
+            line-height: 1.7;
+            margin-bottom: 1.5rem;
+        }
+
+        .rules-list {
+            list-style: none;
+            padding: 0;
+            margin-bottom: 1.5rem;
+        }
+
+        .rules-list li {
+            font-size: .85rem;
+            color: var(--text-dim);
+            padding: .4rem 0;
+            display: flex;
+            align-items: flex-start;
+            gap: .5rem;
+        }
+
+        .rules-list li::before {
+            content: '•';
+            color: var(--primary);
+            font-weight: 700;
+        }
+
+        /* Steps */
+        .steps-container {
+            display: flex;
+            flex-direction: column;
+            gap: .75rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .step-card {
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            overflow: hidden;
+            transition: all .3s;
+            cursor: pointer;
+        }
+
+        .step-card.active {
+            border-color: rgba(125, 211, 252, 0.2);
+            background: rgba(125, 211, 252, 0.03);
+        }
+
+        .step-header {
+            padding: 1rem 1.2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .step-info {
+            display: flex;
+            align-items: center;
+            gap: .75rem;
+        }
+
+        .step-number {
+            font-size: .75rem;
+            font-weight: 700;
+            color: var(--bg);
+            background: var(--text-muted);
+            width: 26px;
+            height: 26px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background .3s;
+        }
+
+        .step-card.active .step-number {
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+        }
+
+        .step-title-text {
+            font-size: .9rem;
+            font-weight: 600;
+            color: var(--text-dim);
+            transition: color .3s;
+        }
+
+        .step-card.active .step-title-text {
+            color: var(--primary);
+        }
+
+        .expand-icon {
+            font-size: 1rem;
+            color: var(--text-muted);
+            transition: transform .3s;
+        }
+
+        .step-card.active .expand-icon {
+            transform: rotate(180deg);
+            color: var(--primary);
+        }
+
+        .step-body {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height .4s ease, padding .4s ease;
+            padding: 0 1.2rem;
+        }
+
+        .step-card.active .step-body {
+            max-height: 400px;
+            padding-bottom: 1.2rem;
+        }
+
+        .step-body p {
+            font-size: .85rem;
+            color: var(--text-dim);
+            line-height: 1.7;
+        }
+
+        .step-hint {
+            font-size: .8rem;
+            color: var(--text-muted);
+            margin-top: .5rem;
+            font-style: italic;
+        }
+
+        /* Progress */
+        .progress-wrapper {
+            margin-bottom: 1.5rem;
+        }
+
+        .progress-text {
+            font-size: .8rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            margin-bottom: .4rem;
+        }
+
+        .progress-container {
+            height: 6px;
+            background: var(--surface);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary), var(--accent));
+            width: 25%;
+            transition: width .4s ease;
+            border-radius: 10px;
+        }
+
+        /* Timer */
+        .timer-box {
+            background: linear-gradient(135deg, rgba(125, 211, 252, 0.08), rgba(192, 132, 252, 0.05));
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 1.5rem;
+            text-align: center;
+        }
+
+        .timer-label {
+            font-size: .7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: var(--text-muted);
+            margin-bottom: .5rem;
+        }
+
+        .timer-display {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 2.8rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .timer-display.warning {
+            background: linear-gradient(135deg, var(--amber), var(--red));
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .timer-sub {
+            font-size: .75rem;
+            color: var(--text-muted);
+            margin-top: .3rem;
+        }
+
+        /* Credentials */
+        .cred-box {
+            border: 1px solid rgba(34, 197, 94, 0.15);
+            border-radius: 12px;
+            padding: 1.2rem;
+            background: rgba(34, 197, 94, 0.03);
+        }
+
+        .cred-title {
+            font-size: .8rem;
+            font-weight: 700;
+            color: var(--green);
+            margin-bottom: .75rem;
+            display: flex;
+            align-items: center;
+            gap: .4rem;
+        }
+
+        .cred-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: .4rem 0;
+            font-size: .8rem;
+        }
+
+        .cred-label {
+            color: var(--text-muted);
+            font-weight: 600;
+        }
+
+        .cred-value {
+            color: var(--text);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: .78rem;
+        }
+
+        .cred-link {
+            display: block;
+            margin-top: .75rem;
+            text-align: center;
+        }
+
+        .cred-link a {
+            display: inline-flex;
+            align-items: center;
+            gap: .4rem;
+            background: linear-gradient(135deg, var(--primary), var(--primary-dim));
+            color: var(--bg);
+            padding: .5rem 1.2rem;
+            border-radius: 10px;
+            font-size: .82rem;
+            font-weight: 700;
+            text-decoration: none;
+            transition: all .3s;
+        }
+
+        .cred-link a:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px var(--primary-glow);
+        }
+
+        /* Buttons */
+        .btn {
+            border: none;
+            border-radius: 12px;
+            padding: .75rem 1.5rem;
+            font-size: .9rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all .3s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: .5rem;
+            width: 100;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .btn-start {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dim));
+            color: var(--bg);
+            box-shadow: 0 4px 15px var(--primary-glow);
+            width: 100%;
+        }
+
+        .btn-start:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px var(--primary-glow);
+        }
+
+        .btn-start:disabled {
+            opacity: .6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-submit {
+            background: linear-gradient(135deg, var(--green), #16a34a);
+            color: #fff;
+            box-shadow: 0 4px 15px rgba(34, 197, 94, 0.2);
+            width: 100%;
+        }
+
+        .btn-submit:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(34, 197, 94, 0.3);
+        }
+
+        .btn-submit:disabled {
+            opacity: .6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-end {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--red);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+            width: 100%;
+        }
+
+        .btn-end:hover {
+            background: rgba(239, 68, 68, 0.2);
+        }
+
+        .btn-end:disabled {
+            opacity: .6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* Score Result */
+        .score-result {
+            border-radius: 16px;
+            padding: 1.5rem;
+            text-align: center;
+        }
+
+        .score-result.pass {
+            background: rgba(34, 197, 94, 0.05);
+            border: 1px solid rgba(34, 197, 94, 0.15);
+        }
+
+        .score-result.fail {
+            background: rgba(239, 68, 68, 0.05);
+            border: 1px solid rgba(239, 68, 68, 0.15);
+        }
+
+        .score-big {
+            font-size: 3rem;
+            font-weight: 900;
+            margin: .5rem 0;
+        }
+
+        .score-big.pass {
+            color: var(--green);
+        }
+
+        .score-big.fail {
+            color: var(--red);
+        }
+
+        .score-label {
+            font-size: .8rem;
+            color: var(--text-muted);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .score-details {
+            margin-top: 1rem;
+        }
+
+        .score-task {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: .5rem 0;
+            border-bottom: 1px solid var(--border);
+            font-size: .82rem;
+        }
+
+        .score-task:last-child {
+            border-bottom: none;
+        }
+
+        .score-task-name {
+            color: var(--text-dim);
+        }
+
+        .score-task-status {
+            font-weight: 700;
+        }
+
+        .score-task-status.pass {
+            color: var(--green);
+        }
+
+        .score-task-status.fail {
+            color: var(--red);
+        }
+
+        /* Validation output */
+        .validation-output {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1rem;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: .78rem;
+            color: var(--green);
+            white-space: pre-wrap;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        /* Status indicator */
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: .4rem;
+            padding: 4px 10px;
+            border-radius: 50px;
+            font-size: .7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .status-badge.active {
+            background: rgba(34, 197, 94, 0.1);
+            color: var(--green);
+        }
+
+        .status-badge .pulse-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--green);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+
+            50% {
+                opacity: .4;
+                transform: scale(.8);
+            }
+        }
+
+        /* Hidden */
+        .hidden {
+            display: none !important;
+        }
+
+        /* Responsive */
+        @media(max-width:900px) {
+            .lab-layout {
+                grid-template-columns: 1fr;
+            }
+
+            .control-panel {
+                position: static;
+            }
+
+            .lab-panel {
+                position: static;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="lab-layout">
+        <!-- LEFT: Instructions Panel -->
+        <div class="lab-panel">
+            <a href="{% url 'dashboard' %}" class="back-link">
+                <span class="material-symbols-outlined" style="font-size:1rem">arrow_back</span> Back to Dashboard
+            </a>
+
+            <header class="lab-header">
+                <h1 class="lab-title">S3 Architecture Lab</h1>
+                <p class="lab-desc">Learn how to securely configure an S3 bucket with versioning, policies, and block
+                    public access.</p>
+            </header>
+
+            <div class="section-title"><span class="material-symbols-outlined">flag</span> Objective</div>
+            <p class="section-content">By the end of this lab, you will be able to launch an S3 bucket, enable
+                versioning, configure bucket policies, block public access, and upload objects successfully.</p>
+
+            <div class="section-title"><span class="material-symbols-outlined">gavel</span> Rules</div>
+            <ul class="rules-list">
+                <li>Use only the provided environment and credentials.</li>
+                <li>Do not create any extra resources not specified in the instructions.</li>
+                <li>The lab environment will automatically expire after 60 minutes.</li>
+            </ul>
+
+            <div class="section-title"><span class="material-symbols-outlined">checklist</span> Instructions</div>
+
+            <div class="steps-container">
+                <article class="step-card active" id="step-1">
+                    <header class="step-header">
+                        <div class="step-info"><span class="step-number">1</span>
+                            <h3 class="step-title-text">Create S3 Bucket</h3>
+                        </div>
+                        <span class="expand-icon material-symbols-outlined">expand_more</span>
+                    </header>
+                    <div class="step-body">
+                        <p>Navigate to S3. Click Create Bucket. Name it securely. You must create it in the us-east-1
+                            region.</p>
+                    </div>
+                </article>
+                <article class="step-card" id="step-2">
+                    <header class="step-header">
+                        <div class="step-info"><span class="step-number">2</span>
+                            <h3 class="step-title-text">Enable Versioning</h3>
+                        </div>
+                        <span class="expand-icon material-symbols-outlined">expand_more</span>
+                    </header>
+                    <div class="step-body">
+                        <p>Go to the Properties tab of your bucket and Edit Bucket Versioning to Enable it.</p>
+                    </div>
+                </article>
+                <article class="step-card" id="step-3">
+                    <header class="step-header">
+                        <div class="step-info"><span class="step-number">3</span>
+                            <h3 class="step-title-text">Configure Policy & Block Public Access</h3>
+                        </div>
+                        <span class="expand-icon material-symbols-outlined">expand_more</span>
+                    </header>
+                    <div class="step-body">
+                        <p>Ensure Block Public Access is turned ON. Then attach a basic bucket policy allowing your IAM
+                            user.</p>
+                    </div>
+                </article>
+                <article class="step-card" id="step-4">
+                    <header class="step-header">
+                        <div class="step-info"><span class="step-number">4</span>
+                            <h3 class="step-title-text">Upload an Object</h3>
+                        </div>
+                        <span class="expand-icon material-symbols-outlined">expand_more</span>
+                    </header>
+                    <div class="step-body">
+                        <p>Upload any file to your newly created S3 bucket to test the configuration.</p>
+                    </div>
+                </article>
+            </div>
+
+            <div class="progress-wrapper">
+                <span class="progress-text">Step 1 of 4</span>
+                <div class="progress-container">
+                    <div class="progress-bar" id="step-progress"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- RIGHT: Control Panel -->
+        <div class="control-panel">
+
+            <!-- Timer Card -->
+            <div class="control-card timer-box hidden" id="timer-card">
+                <div class="timer-label">Time Remaining</div>
+                <div class="timer-display" id="timer-display">60:00</div>
+                <div class="timer-sub">Lab auto-expires when timer ends</div>
+            </div>
+
+            <!-- Credentials Card -->
+            <div class="control-card cred-box hidden" id="cred-card">
+                <div class="cred-title"><i class="fas fa-key"></i> Lab Credentials</div>
+                <div class="cred-item">
+                    <span class="cred-label">IAM User</span>
+                    <span class="cred-value" id="cred-user">—</span>
+                </div>
+                <div class="cred-item">
+                    <span class="cred-label">Password</span>
+                    <span class="cred-value" id="cred-pass">—</span>
+                </div>
+                <div class="cred-link">
+                    <a id="cred-url" href="#" target="_blank">
+                        <i class="fas fa-external-link-alt"></i> Open AWS Console
+                    </a>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="control-card" id="action-card">
+                <button class="btn btn-start" id="start-btn" onclick="startLab()">
+                    <span class="material-symbols-outlined" style="font-size:1.1rem">play_arrow</span> Start Lab
+                </button>
+                <button class="btn btn-submit hidden" id="submit-btn" onclick="submitLab()" style="margin-top:.75rem">
+                    <span class="material-symbols-outlined" style="font-size:1.1rem">check_circle</span> Submit Lab
+                </button>
+                <button class="btn btn-end hidden" id="end-btn" onclick="endLab()" style="margin-top:.75rem">
+                    <span class="material-symbols-outlined" style="font-size:1.1rem">stop_circle</span> End Lab &
+                    Cleanup
+                </button>
+            </div>
+
+            <!-- Score Result Card (shown after submit) -->
+            <div class="control-card hidden" id="score-card">
+                <div id="score-result-content"></div>
+            </div>
+
+            <!-- Status Card -->
+            <div class="control-card hidden" id="status-card">
+                <div style="display:flex;align-items:center;gap:.5rem;font-size:.82rem;color:var(--text-dim)">
+                    <span class="material-symbols-outlined" style="font-size:1rem;color:var(--primary)">info</span>
+                    <span id="status-text">Ready to start</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <script>
+        // ========== ACCORDION ==========
+        document.addEventListener('DOMContentLoaded', () => {
+            const stepCards = document.querySelectorAll('.step-card');
+            const progressText = document.querySelector('.progress-text');
+            const progressBar = document.getElementById('step-progress');
+            const total = stepCards.length;
+
+            stepCards.forEach((card, index) => {
+                card.querySelector('.step-header').addEventListener('click', () => {
+                    stepCards.forEach(c => c.classList.remove('active'));
+                    card.classList.add('active');
+                    const step = index + 1;
+                    progressText.textContent = `Step ${step} of ${total}`;
+                    progressBar.style.width = `${(step / total) * 100}%`;
+                });
+            });
+
+            checkCurrentLabStatus();
+        });
+
+        // ========== PAGE RELOAD STATUS CHECK ==========
+        async function checkCurrentLabStatus() {
+            try {
+                const response = await fetch('/Lab/{{ lab.slug }}/status/', {
+                    method: 'GET',
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                });
+                const data = await response.json();
+
+                // Show credentials and timer for active/submitted sessions
+                if (data.status === 'active' || data.status === 'submitted') {
+                    showActiveState(data.credentials, data.timer_expires_at);
+
+                    if (data.status === 'submitted') {
+                        updateStatus('✅ Lab was submitted previously. You can perform tasks and validate again!');
+                    }
+                } else if (data.status === 'provisioning') {
+                    const btn = document.getElementById('start-btn');
+                    btn.innerHTML = '<span class="material-symbols-outlined spinning">sync</span> Provisioning...';
+                    btn.disabled = true;
+                    updateStatus('🔄 Lab is currently provisioning in the background. Please wait...');
+
+                    // Poll again after 5 seconds
+                    setTimeout(checkCurrentLabStatus, 5000);
+                } else if (data.status === 'destroying') {
+                    const btn = document.getElementById('end-btn');
+                    btn.innerHTML = '<span class="material-symbols-outlined spinning">sync</span> Destroying...';
+                    btn.disabled = true;
+                    updateStatus('🧹 Destroying lab resources in the background. Please wait...');
+
+                    // Poll again after 5 seconds
+                    setTimeout(checkCurrentLabStatus, 5000);
+                } else if (data.status === 'ended') {
+                    // Destroy completed — reset UI to Start Lab
+                    if (timerInterval) clearInterval(timerInterval);
+                    document.getElementById('timer-card').classList.add('hidden');
+                    document.getElementById('cred-card').classList.add('hidden');
+                    document.getElementById('score-card').classList.add('hidden');
+                    document.getElementById('submit-btn').classList.add('hidden');
+                    document.getElementById('end-btn').classList.add('hidden');
+
+                    const btn = document.getElementById('start-btn');
+                    btn.innerHTML = '<span class="material-symbols-outlined" style="font-size:1.1rem">play_arrow</span> Start Lab';
+                    btn.disabled = false;
+                    btn.classList.remove('hidden');
+
+                    updateStatus('Ready to start!');
+                } else if (data.status === 'expired') {
+                    updateStatus('⏰ Lab timer expired! Please end the lab.');
+                    document.getElementById('start-btn').classList.add('hidden');
+                    document.getElementById('end-btn').classList.remove('hidden');
+                } else if (data.status === 'no_session' || data.status === 'no_lab') {
+                    if (timerInterval) clearInterval(timerInterval);
+                    document.getElementById('timer-card').classList.add('hidden');
+                    document.getElementById('cred-card').classList.add('hidden');
+                    document.getElementById('score-card').classList.add('hidden');
+                    document.getElementById('submit-btn').classList.add('hidden');
+                    document.getElementById('end-btn').classList.add('hidden');
+
+                    const btn = document.getElementById('start-btn');
+                    btn.innerHTML = '<span class="material-symbols-outlined" style="font-size:1.1rem">play_arrow</span> Start Lab';
+                    btn.disabled = false;
+                    btn.classList.remove('hidden');
+
+                    updateStatus('✅ Ready to start');
+                }
+            } catch (error) {
+                console.error("Error fetching lab status:", error);
+            }
+        }
+
+        // ========== TIMER ==========
+        let timerInterval = null;
+
+        function startTimer(expiresAt) {
+            const timerCard = document.getElementById('timer-card');
+            const timerDisplay = document.getElementById('timer-display');
+            timerCard.classList.remove('hidden');
+
+            const expiry = new Date(expiresAt).getTime();
+
+            // Clear any existing timer to avoid double speed
+            if (timerInterval) clearInterval(timerInterval);
+
+            timerInterval = setInterval(() => {
+                const now = Date.now();
+                const diff = expiry - now;
+
+                if (diff <= 0) {
+                    clearInterval(timerInterval);
+                    timerDisplay.textContent = '00:00';
+                    timerDisplay.classList.add('warning');
+                    updateStatus('⏰ Lab timer expired! Submit your work.');
+                    submitLab(); // Auto-submit
+                    return;
+                }
+
+                const mins = Math.floor(diff / 60000);
+                const secs = Math.floor((diff % 60000) / 1000);
+                timerDisplay.textContent = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+
+                if (mins < 10) {
+                    timerDisplay.classList.add('warning');
+                } else {
+                    timerDisplay.classList.remove('warning');
+                }
+            }, 1000);
+        }
+
+        // ========== UI HELPERS ==========
+        function updateStatus(msg) {
+            const card = document.getElementById('status-card');
+            card.classList.remove('hidden');
+            document.getElementById('status-text').textContent = msg;
+        }
+
+        function showActiveState(credentials, timerExpiresAt) {
+            // Show credentials
+            document.getElementById('cred-card').classList.remove('hidden');
+            document.getElementById('cred-user').textContent = credentials.iam_user_name;
+            document.getElementById('cred-pass').textContent = credentials.console_password;
+            document.getElementById('cred-url').href = credentials.console_login_link;
+
+            // Show timer
+            startTimer(timerExpiresAt);
+
+            // Toggle buttons
+            document.getElementById('start-btn').classList.add('hidden');
+            document.getElementById('submit-btn').classList.remove('hidden');
+            document.getElementById('end-btn').classList.remove('hidden');
+
+            updateStatus('✅ Lab is active. Perform the tasks in AWS Console.');
+        }
+
+        function getCookie(name) {
+            let v = null;
+            document.cookie.split(';').forEach(c => {
+                c = c.trim();
+                if (c.startsWith(name + '=')) v = decodeURIComponent(c.substring(name.length + 1));
+            });
+            return v;
+        }
+
+        // ========== API CALLS ==========
+        async function startLab() {
+            const btn = document.getElementById('start-btn');
+            btn.textContent = '⏳ Provisioning Lab...';
+            btn.disabled = true;
+            updateStatus('🔄 Running Terraform... This may take 1-2 minutes.');
+
+            try {
+                const response = await fetch('/Lab/{{ lab.slug }}/start/', {
+                    method: 'POST',
+                    headers: { 'X-CSRFToken': getCookie('csrftoken') }
+                });
+                const data = await response.json();
+
+                if (data.status === 'provisioning') {
+                    // Start polling
+                    btn.innerHTML = '<span class="material-symbols-outlined spinning">sync</span> Provisioning...';
+                    updateStatus('🔄 Lab is currently provisioning. Please wait...');
+                    checkCurrentLabStatus();
+                } else if (data.status === 'success') {
+                    showActiveState(data.credentials, data.timer_expires_at);
+                } else {
+                    alert('Error: ' + data.message);
+                    btn.innerHTML = '<span class="material-symbols-outlined" style="font-size:1.1rem">play_arrow</span> Start Lab';
+                    btn.disabled = false;
+                    updateStatus('❌ Failed to start lab. Try again.');
+                }
+            } catch (error) {
+                alert('Network Error: ' + error.message);
+                btn.innerHTML = '<span class="material-symbols-outlined" style="font-size:1.1rem">play_arrow</span> Start Lab';
+                btn.disabled = false;
+                updateStatus('❌ Network error.');
+            }
+        }
+
+        async function submitLab() {
+            const btn = document.getElementById('submit-btn');
+            btn.textContent = '⏳ Validating...';
+            btn.disabled = true;
+            updateStatus('🔍 Checking your AWS activities via Boto3...');
+
+            try {
+                const response = await fetch('/Lab/{{ lab.slug }}/submit/', {
+                    method: 'POST',
+                    headers: { 'X-CSRFToken': getCookie('csrftoken') }
+                });
+                const data = await response.json();
+
+                if (data.status === 'success') {
+                    showScore(data);
+
+                    btn.innerHTML = '<span class="material-symbols-outlined" style="font-size:1.1rem">check_circle</span> Submit Lab';
+                    btn.disabled = false;
+
+                    updateStatus('📊 Score generated. You can fix tasks and validate again, or click "End Lab" to cleanup.');
+                } else {
+                    alert('Error: ' + data.message);
+                    btn.innerHTML = '<span class="material-symbols-outlined" style="font-size:1.1rem">check_circle</span> Submit Lab';
+                    btn.disabled = false;
+                    updateStatus('❌ Validation failed: ' + data.message);
+                }
+            } catch (error) {
+                alert('Network Error: ' + error.message);
+                btn.innerHTML = '<span class="material-symbols-outlined" style="font-size:1.1rem">check_circle</span> Submit Lab';
+                btn.disabled = false;
+            }
+        }
+
+        function showScore(data) {
+            const card = document.getElementById('score-card');
+            const content = document.getElementById('score-result-content');
+            const score = data.score;
+            const isPassing = score.score_percentage >= 50;
+
+            let tasksHtml = '';
+            data.tasks.forEach(t => {
+                tasksHtml += `
+                    <div class="score-task">
+                        <span class="score-task-name">${t.task_name}</span>
+                        <span class="score-task-status ${t.passed ? 'pass' : 'fail'}">${t.passed ? '✅ Pass' : '❌ Fail'}</span>
+                    </div>`;
+            });
+
+            content.innerHTML = `
+                <div class="score-result ${isPassing ? 'pass' : 'fail'}">
+                    <div class="score-label">Your Score</div>
+                    <div class="score-big ${isPassing ? 'pass' : 'fail'}">${score.score_percentage}%</div>
+                    <div style="font-size:.85rem;color:var(--text-dim)">${score.passed_tasks}/${score.total_tasks} tasks passed</div>
+                    <div class="score-details">${tasksHtml}</div>
+                </div>`;
+
+            card.classList.remove('hidden');
+        }
+
+        async function endLab() {
+            if (!confirm('Are you sure you want to end the lab? This will destroy ALL AWS resources.')) return;
+
+            const btn = document.getElementById('end-btn');
+            btn.textContent = '⏳ Cleaning up...';
+            btn.disabled = true;
+
+            document.getElementById('submit-btn').disabled = true;
+
+            updateStatus('🧹 Running cleanup + terraform destroy...');
+
+            try {
+                const response = await fetch('/Lab/{{ lab.slug }}/end/', {
+                    method: 'POST',
+                    headers: { 'X-CSRFToken': getCookie('csrftoken') }
+                });
+                const data = await response.json();
+
+                if (data.status === 'destroying') {
+                    if (timerInterval) clearInterval(timerInterval);
+                    updateStatus('🧹 Resources are being destroyed in background. Please wait...');
+                    checkCurrentLabStatus();
+                } else if (data.status === 'success') {
+                    if (timerInterval) clearInterval(timerInterval);
+                    if (data.score) showScore({ score: data.score, tasks: [] });
+
+                    updateStatus('Ready to start!');
+                    document.getElementById('timer-card').classList.add('hidden');
+                    document.getElementById('cred-card').classList.add('hidden');
+                    document.getElementById('submit-btn').classList.add('hidden');
+                    btn.classList.add('hidden');
+
+                    const startBtn = document.getElementById('start-btn');
+                    startBtn.innerHTML = '<span class="material-symbols-outlined" style="font-size:1.1rem">play_arrow</span> Start Lab';
+                    startBtn.disabled = false;
+                    startBtn.classList.remove('hidden');
+                } else {
+                    alert('Error: ' + data.message);
+                    btn.innerHTML = '<span class="material-symbols-outlined" style="font-size:1.1rem">stop_circle</span> End Lab & Cleanup';
+                    btn.disabled = false;
+                    document.getElementById('submit-btn').disabled = false;
+                }
+            } catch (error) {
+                alert('Network Error: ' + error.message);
+                btn.innerHTML = '<span class="material-symbols-outlined" style="font-size:1.1rem">stop_circle</span> End Lab & Cleanup';
+                btn.disabled = false;
+                document.getElementById('submit-btn').disabled = false;
+            }
+        }
+    </script>
+</body>
+
+</html>
