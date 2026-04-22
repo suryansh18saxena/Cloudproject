@@ -34,17 +34,20 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = [
+    'daphne',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'channels',
     'Lab',
     'home',
     'dashboard',
     'account',
     'interview',
+    'linux_labs',
     'django_q',
 ]
 
@@ -60,6 +63,14 @@ Q_CLUSTER = {
     'cpu_affinity': 1,
     'label': 'Django Q',
     'orm': 'default'
+}
+
+# Django Channels
+ASGI_APPLICATION = 'Cloud_Project.asgi.application'
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels.layers.InMemoryChannelLayer',
+    }
 }
 
 MIDDLEWARE = [
