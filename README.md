@@ -84,9 +84,7 @@ Master AWS by deploying actual resources using **Terraform**.
 
 ---
 
-## 📸 Screenshots
 
-*(Add your screenshots here to make it truly aesthetic!)*
 
 > [!TIP]
 > Use the **End Lab** button to properly clean up Docker resources and maintain system performance.
