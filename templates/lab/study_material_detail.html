@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CloudLabX — {{ material.title }}</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box}
+        :root{--bg:#06080f;--bg2:#0b1120;--surface:#111827;--surface2:#1a2438;--surface3:#1e293b;--primary:#7dd3fc;--primary-dim:#38bdf8;--primary-glow:rgba(125,211,252,0.15);--accent:#c084fc;--accent2:#f472b6;--text:#e2e8f0;--text-dim:#94a3b8;--text-muted:#64748b;--border:rgba(125,211,252,0.08);--border-hover:rgba(125,211,252,0.2);--glass2:rgba(26,36,56,0.65);--green:#22c55e;--red:#ef4444;--amber:#f59e0b;--purple:#a855f7}
+        html{scroll-behavior:smooth}
+        body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;line-height:1.6}
+        ::selection{background:var(--primary);color:var(--bg)}
+        ::-webkit-scrollbar{width:6px}
+        ::-webkit-scrollbar-track{background:var(--bg)}
+        ::-webkit-scrollbar-thumb{background:var(--surface3);border-radius:10px}
+
+        .page-layout{display:grid;grid-template-columns:260px 1fr;min-height:100vh}
+
+        /* Sidebar TOC */
+        .toc-sidebar{background:rgba(6,8,15,0.95);backdrop-filter:blur(20px);border-right:1px solid var(--border);padding:1.5rem 0;position:sticky;top:0;height:100vh;overflow-y:auto;display:flex;flex-direction:column}
+        .toc-header{padding:0 1.5rem;margin-bottom:1.5rem}
+        .toc-back{display:inline-flex;align-items:center;gap:.4rem;color:var(--text-dim);font-size:.8rem;font-weight:600;text-decoration:none;transition:color .3s;margin-bottom:1rem}
+        .toc-back:hover{color:var(--primary)}
+        .toc-title{font-size:.95rem;font-weight:800;background:linear-gradient(135deg,var(--primary),var(--accent));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+        .toc-subtitle{font-size:.65rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:1.5px;font-weight:700;margin-top:.2rem}
+        .toc-nav{flex:1;padding:0 .75rem}
+        .toc-label{font-size:.6rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:2px;font-weight:700;padding:.75rem 1rem;margin-top:.5rem}
+        .toc-item{display:flex;align-items:center;gap:.6rem;padding:.6rem 1rem;border-radius:10px;color:var(--text-dim);font-size:.8rem;font-weight:500;cursor:pointer;transition:all .25s;text-decoration:none;margin-bottom:2px;position:relative}
+        .toc-item:hover{background:rgba(125,211,252,0.05);color:var(--text)}
+        .toc-item.active{background:linear-gradient(135deg,rgba(125,211,252,0.1),rgba(192,132,252,0.05));color:var(--primary);font-weight:600}
+        .toc-item.active::before{content:'';position:absolute;left:0;top:50%;transform:translateY(-50%);width:3px;height:60%;background:linear-gradient(180deg,var(--primary),var(--accent));border-radius:0 4px 4px 0}
+        .toc-item .material-symbols-outlined{font-size:1rem}
+        .toc-num{width:22px;height:22px;border-radius:6px;background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:.65rem;font-weight:700;color:var(--text-muted);flex-shrink:0}
+        .toc-item.active .toc-num{background:linear-gradient(135deg,var(--primary),var(--accent));color:var(--bg)}
+        .toc-footer{padding:1rem 1.5rem;border-top:1px solid var(--border)}
+        .toc-lab-btn{display:flex;align-items:center;justify-content:center;gap:.5rem;background:linear-gradient(135deg,var(--primary),var(--primary-dim));color:var(--bg);border:none;padding:.65rem 1.2rem;border-radius:10px;font-weight:700;font-size:.8rem;cursor:pointer;transition:all .3s;width:100%;text-decoration:none;font-family:'Inter',sans-serif}
+        .toc-lab-btn:hover{box-shadow:0 6px 20px var(--primary-glow);transform:translateY(-2px)}
+
+        /* Main Content */
+        .content-area{padding:2.5rem 3rem;max-width:900px}
+
+        /* Header */
+        .material-header{margin-bottom:2.5rem;padding-bottom:2rem;border-bottom:1px solid var(--border)}
+        .header-badges{display:flex;gap:.75rem;margin-bottom:1rem;flex-wrap:wrap}
+        .badge{display:inline-flex;align-items:center;gap:.4rem;padding:4px 12px;border-radius:8px;font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:1px}
+        .badge.diff-beginner{background:rgba(34,197,94,0.1);color:var(--green)}
+        .badge.diff-intermediate{background:rgba(168,85,247,0.1);color:var(--purple)}
+        .badge.diff-advanced{background:rgba(239,68,68,0.1);color:var(--red)}
+        .badge.time{background:rgba(125,211,252,0.08);color:var(--primary)}
+        .badge.sections{background:rgba(192,132,252,0.08);color:var(--accent)}
+        .material-header h1{font-size:2rem;font-weight:900;letter-spacing:-1px;margin-bottom:.5rem;line-height:1.2}
+        .material-header .overview-text{font-size:.95rem;color:var(--text-dim);line-height:1.7}
+
+        /* Info Cards Row */
+        .info-cards{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:2.5rem}
+        .info-card{background:var(--glass2);border:1px solid var(--border);border-radius:16px;padding:1.5rem}
+        .info-card h3{font-size:.85rem;font-weight:700;margin-bottom:.75rem;display:flex;align-items:center;gap:.5rem}
+        .info-card h3 .material-symbols-outlined{font-size:1.1rem;color:var(--primary)}
+        .info-card ul{list-style:none;padding:0}
+        .info-card li{font-size:.82rem;color:var(--text-dim);padding:.35rem 0;display:flex;align-items:flex-start;gap:.5rem}
+        .info-card li::before{content:'';width:6px;height:6px;border-radius:50%;margin-top:7px;flex-shrink:0}
+        .prereq-card li::before{background:var(--amber)}
+        .outcome-card li::before{background:var(--green)}
+
+        /* Sections */
+        .study-section{background:var(--glass2);backdrop-filter:blur(15px);border:1px solid var(--border);border-radius:20px;padding:2rem;margin-bottom:1.5rem;position:relative;overflow:hidden;transition:border-color .3s}
+        .study-section:hover{border-color:var(--border-hover)}
+        .study-section::before{content:'';position:absolute;top:0;left:0;width:3px;height:100%;border-radius:0 4px 4px 0}
+        .study-section.type-theory::before{background:var(--primary)}
+        .study-section.type-concept::before{background:var(--accent)}
+        .study-section.type-architecture::before{background:var(--purple)}
+        .study-section.type-best_practice::before{background:var(--green)}
+        .study-section.type-hands_on::before{background:var(--amber)}
+        .study-section.type-reference::before{background:var(--text-muted)}
+
+        .section-header{display:flex;align-items:center;gap:.75rem;margin-bottom:1.2rem}
+        .section-num{width:32px;height:32px;border-radius:10px;background:linear-gradient(135deg,var(--primary),var(--accent));display:flex;align-items:center;justify-content:center;font-size:.8rem;font-weight:800;color:var(--bg);flex-shrink:0}
+        .section-meta{flex:1}
+        .section-meta h2{font-size:1.15rem;font-weight:700;line-height:1.3}
+        .section-type-badge{font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;padding:2px 8px;border-radius:6px;background:rgba(125,211,252,0.08);color:var(--primary);margin-top:.2rem;display:inline-block}
+        .section-icon{width:36px;height:36px;border-radius:10px;background:rgba(125,211,252,0.08);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+        .section-icon .material-symbols-outlined{font-size:1.1rem;color:var(--primary)}
+
+        .section-content{font-size:.9rem;color:var(--text-dim);line-height:1.8;margin-bottom:1rem}
+        .section-content p{margin-bottom:.75rem}
+        .section-content strong{color:var(--text);font-weight:600}
+
+        /* Code Block */
+        .code-block{background:var(--surface);border:1px solid var(--border);border-radius:12px;margin:1rem 0;overflow:hidden}
+        .code-header{display:flex;justify-content:space-between;align-items:center;padding:.6rem 1rem;background:rgba(125,211,252,0.04);border-bottom:1px solid var(--border)}
+        .code-lang{font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--primary)}
+        .copy-btn{background:none;border:1px solid var(--border);color:var(--text-muted);padding:3px 10px;border-radius:6px;font-size:.7rem;font-weight:600;cursor:pointer;transition:all .3s;font-family:'Inter',sans-serif}
+        .copy-btn:hover{border-color:var(--primary);color:var(--primary)}
+        .code-body{padding:1rem;font-family:'JetBrains Mono',monospace;font-size:.8rem;color:var(--green);white-space:pre-wrap;overflow-x:auto;line-height:1.7}
+
+        /* Tip Box */
+        .tip-box{background:linear-gradient(135deg,rgba(245,158,11,0.06),rgba(245,158,11,0.02));border:1px solid rgba(245,158,11,0.15);border-radius:12px;padding:1rem 1.2rem;margin:1rem 0;display:flex;gap:.75rem;align-items:flex-start}
+        .tip-box .tip-icon{width:28px;height:28px;border-radius:8px;background:rgba(245,158,11,0.12);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:.85rem}
+        .tip-box p{font-size:.82rem;color:var(--amber);line-height:1.6;font-weight:500}
+
+        /* Takeaway Box */
+        .takeaway-box{background:linear-gradient(135deg,rgba(34,197,94,0.06),rgba(34,197,94,0.02));border:1px solid rgba(34,197,94,0.15);border-radius:12px;padding:1rem 1.2rem;margin:1rem 0;display:flex;gap:.75rem;align-items:flex-start}
+        .takeaway-box .takeaway-icon{width:28px;height:28px;border-radius:8px;background:rgba(34,197,94,0.12);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:.85rem}
+        .takeaway-box p{font-size:.82rem;color:var(--green);line-height:1.6;font-weight:500}
+
+        /* CTA Footer */
+        .cta-footer{background:linear-gradient(135deg,rgba(125,211,252,0.08),rgba(192,132,252,0.05));border:1px solid var(--border);border-radius:20px;padding:2.5rem;text-align:center;margin-top:2rem}
+        .cta-footer h3{font-size:1.3rem;font-weight:800;margin-bottom:.5rem}
+        .cta-footer p{color:var(--text-dim);font-size:.9rem;margin-bottom:1.5rem}
+        .cta-actions{display:flex;gap:1rem;justify-content:center;flex-wrap:wrap}
+        .cta-btn-primary{background:linear-gradient(135deg,var(--primary),var(--primary-dim));color:var(--bg);border:none;padding:.75rem 2rem;border-radius:12px;font-weight:700;font-size:.9rem;cursor:pointer;transition:all .3s;display:inline-flex;align-items:center;gap:.5rem;text-decoration:none;font-family:'Inter',sans-serif}
+        .cta-btn-primary:hover{box-shadow:0 8px 25px var(--primary-glow);transform:translateY(-2px)}
+        .cta-btn-secondary{background:none;border:1px solid var(--border);color:var(--text-dim);padding:.75rem 1.5rem;border-radius:12px;font-weight:600;font-size:.9rem;cursor:pointer;transition:all .3s;display:inline-flex;align-items:center;gap:.5rem;text-decoration:none;font-family:'Inter',sans-serif}
+        .cta-btn-secondary:hover{border-color:var(--primary);color:var(--primary)}
+
+        /* Scroll Progress */
+        .scroll-progress{position:fixed;top:0;left:260px;right:0;height:3px;z-index:100;background:transparent}
+        .scroll-progress-bar{height:100%;background:linear-gradient(90deg,var(--primary),var(--accent));width:0%;transition:width .1s}
+
+        /* Mobile */
+        .mobile-toc-toggle{display:none;position:fixed;bottom:1.5rem;right:1.5rem;width:50px;height:50px;border-radius:14px;background:linear-gradient(135deg,var(--primary),var(--accent));color:var(--bg);border:none;cursor:pointer;z-index:200;box-shadow:0 6px 25px var(--primary-glow);font-size:1.2rem}
+
+        @media(max-width:900px){
+            .page-layout{grid-template-columns:1fr}
+            .toc-sidebar{position:fixed;left:0;top:0;width:280px;z-index:300;transform:translateX(-100%);transition:transform .3s}
+            .toc-sidebar.open{transform:translateX(0)}
+            .content-area{padding:1.5rem}
+            .mobile-toc-toggle{display:flex;align-items:center;justify-content:center}
+            .scroll-progress{left:0}
+            .info-cards{grid-template-columns:1fr}
+        }
+
+        @keyframes fadeIn{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+        .fade-in{opacity:0;animation:fadeIn .5s forwards}
+        .fade-in:nth-child(1){animation-delay:.05s}
+        .fade-in:nth-child(2){animation-delay:.1s}
+        .fade-in:nth-child(3){animation-delay:.15s}
+        .fade-in:nth-child(4){animation-delay:.2s}
+        .fade-in:nth-child(5){animation-delay:.25s}
+    </style>
+</head>
+<body>
+    <div class="scroll-progress"><div class="scroll-progress-bar" id="scrollBar"></div></div>
+
+    <div class="page-layout">
+        <!-- TOC Sidebar -->
+        <aside class="toc-sidebar" id="tocSidebar">
+            <div class="toc-header">
+                <a href="{% url 'study_material_hub' %}" class="toc-back">
+                    <span class="material-symbols-outlined" style="font-size:.9rem">arrow_back</span> All Materials
+                </a>
+                <div class="toc-title">{{ material.title }}</div>
+                <div class="toc-subtitle">{{ lab.get_difficulty_display }} • {{ material.estimated_read_minutes }} min</div>
+            </div>
+            <nav class="toc-nav">
+                <div class="toc-label">Contents</div>
+                <a href="#overview" class="toc-item active" data-section="overview">
+                    <span class="material-symbols-outlined">info</span> Overview
+                </a>
+                {% for section in sections %}
+                <a href="#section-{{ section.order }}" class="toc-item" data-section="section-{{ section.order }}">
+                    <span class="toc-num">{{ section.order }}</span>
+                    <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ section.title }}</span>
+                </a>
+                {% endfor %}
+            </nav>
+            <div class="toc-footer">
+                <a href="{% url 'lab_detail' slug=lab.slug %}" class="toc-lab-btn">
+                    <span class="material-symbols-outlined" style="font-size:1rem">science</span> Start Lab →
+                </a>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="content-area">
+            <!-- Header -->
+            <div class="material-header fade-in" id="overview">
+                <div class="header-badges">
+                    <span class="badge diff-{{ lab.difficulty }}">{{ lab.get_difficulty_display }}</span>
+                    <span class="badge time"><span class="material-symbols-outlined" style="font-size:.8rem">schedule</span> {{ material.estimated_read_minutes }} min read</span>
+                    <span class="badge sections"><span class="material-symbols-outlined" style="font-size:.8rem">format_list_numbered</span> {{ sections|length }} sections</span>
+                </div>
+                <h1>{{ material.title }}</h1>
+                <p class="overview-text">{{ material.overview }}</p>
+            </div>
+
+            <!-- Prerequisites & Outcomes -->
+            {% if material.prerequisite_list or material.outcome_list %}
+            <div class="info-cards fade-in">
+                {% if material.prerequisite_list %}
+                <div class="info-card prereq-card">
+                    <h3><span class="material-symbols-outlined">checklist</span> Prerequisites</h3>
+                    <ul>
+                        {% for prereq in material.prerequisite_list %}
+                        <li>{{ prereq }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                {% endif %}
+                {% if material.outcome_list %}
+                <div class="info-card outcome-card">
+                    <h3><span class="material-symbols-outlined">emoji_events</span> Learning Outcomes</h3>
+                    <ul>
+                        {% for outcome in material.outcome_list %}
+                        <li>{{ outcome }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                {% endif %}
+            </div>
+            {% endif %}
+
+            <!-- Study Sections -->
+            {% for section in sections %}
+            <div class="study-section type-{{ section.section_type }} fade-in" id="section-{{ section.order }}">
+                <div class="section-header">
+                    <div class="section-num">{{ section.order }}</div>
+                    <div class="section-meta">
+                        <h2>{{ section.title }}</h2>
+                        <span class="section-type-badge">{{ section.get_section_type_display }}</span>
+                    </div>
+                    <div class="section-icon">
+                        <span class="material-symbols-outlined">{{ section.icon }}</span>
+                    </div>
+                </div>
+
+                <div class="section-content">{{ section.content|safe }}</div>
+
+                {% if section.code_example %}
+                <div class="code-block">
+                    <div class="code-header">
+                        <span class="code-lang">{{ section.code_language }}</span>
+                        <button class="copy-btn" onclick="copyCode(this)">
+                            <i class="fas fa-copy"></i> Copy
+                        </button>
+                    </div>
+                    <div class="code-body">{{ section.code_example }}</div>
+                </div>
+                {% endif %}
+
+                {% if section.tip %}
+                <div class="tip-box">
+                    <div class="tip-icon">💡</div>
+                    <p>{{ section.tip }}</p>
+                </div>
+                {% endif %}
+
+                {% if section.key_takeaway %}
+                <div class="takeaway-box">
+                    <div class="takeaway-icon">✅</div>
+                    <p><strong>Key Takeaway:</strong> {{ section.key_takeaway }}</p>
+                </div>
+                {% endif %}
+            </div>
+            {% endfor %}
+
+            <!-- CTA Footer -->
+            <div class="cta-footer fade-in">
+                <h3>Ready to Practice? 🚀</h3>
+                <p>You've completed the study material. Now put your knowledge to the test in the hands-on lab!</p>
+                <div class="cta-actions">
+                    <a href="{% url 'lab_detail' slug=lab.slug %}" class="cta-btn-primary">
+                        <span class="material-symbols-outlined" style="font-size:1.1rem">science</span> Start Lab Now
+                    </a>
+                    <a href="{% url 'study_material_hub' %}" class="cta-btn-secondary">
+                        <span class="material-symbols-outlined" style="font-size:1rem">arrow_back</span> All Materials
+                    </a>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Mobile TOC Toggle -->
+    <button class="mobile-toc-toggle" onclick="document.getElementById('tocSidebar').classList.toggle('open')">
+        <span class="material-symbols-outlined">menu_book</span>
+    </button>
+
+    <script>
+        // Scroll progress bar
+        window.addEventListener('scroll', () => {
+            const bar = document.getElementById('scrollBar');
+            const h = document.documentElement.scrollHeight - window.innerHeight;
+            bar.style.width = h > 0 ? (window.scrollY / h * 100) + '%' : '0%';
+        });
+
+        // Active TOC tracking
+        const tocItems = document.querySelectorAll('.toc-item');
+        const sectionEls = document.querySelectorAll('[id^="section-"], #overview');
+        const observer = new IntersectionObserver(entries => {
+            entries.forEach(e => {
+                if (e.isIntersecting) {
+                    tocItems.forEach(t => t.classList.remove('active'));
+                    const match = document.querySelector(`.toc-item[data-section="${e.target.id}"]`);
+                    if (match) match.classList.add('active');
+                }
+            });
+        }, { rootMargin: '-20% 0px -70% 0px' });
+        sectionEls.forEach(s => observer.observe(s));
+
+        // Close mobile TOC on link click
+        tocItems.forEach(item => {
+            item.addEventListener('click', () => {
+                document.getElementById('tocSidebar').classList.remove('open');
+            });
+        });
+
+        // Copy code
+        function copyCode(btn) {
+            const code = btn.closest('.code-block').querySelector('.code-body').textContent;
+            navigator.clipboard.writeText(code).then(() => {
+                btn.innerHTML = '<i class="fas fa-check"></i> Copied!';
+                setTimeout(() => { btn.innerHTML = '<i class="fas fa-copy"></i> Copy'; }, 2000);
+            });
+        }
+    </script>
+</body>
+</html>
