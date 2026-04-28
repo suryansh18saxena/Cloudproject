@@ -1231,6 +1231,7 @@
           style="background:rgba(125,211,252,0.1);color:var(--primary)">{{ available_labs|length }}</span></a>
       <a class="nav-item" href="{% url 'interview_home' %}"><span class="material-symbols-outlined">forum</span>Interview Prep<span class="nav-badge" style="background:rgba(192,132,252,0.1);color:var(--accent)">AI</span></a>
       <a class="nav-item" href="{% url 'linux_labs_hub' %}"><span class="material-symbols-outlined">terminal</span>Terminal Labs<span class="nav-badge" style="background:rgba(6,182,212,0.1);color:#06b6d4">NEW</span></a>
+      <a class="nav-item" href="{% url 'study_material_hub' %}"><span class="material-symbols-outlined">menu_book</span>Study Materials<span class="nav-badge" style="background:rgba(34,197,94,0.1);color:var(--green)">📖</span></a>
       <a class="nav-item" href="#"><span class="material-symbols-outlined">trending_up</span>My Progress</a>
       <a class="nav-item" href="#"><span class="material-symbols-outlined">analytics</span>Analytics</a>
       {% if user.profile.is_teacher %}
