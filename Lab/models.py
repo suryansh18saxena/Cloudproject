@@ -133,3 +133,62 @@ class LabScore(models.Model):
 
     class Meta:
         ordering = ['-scored_at']
+
+
+class StudyMaterial(models.Model):
+    """Comprehensive study material linked to a Lab for pre-lab learning."""
+
+    lab = models.OneToOneField(Lab, on_delete=models.CASCADE, related_name='study_material')
+    title = models.CharField(max_length=300)
+    overview = models.TextField(help_text="Brief overview of what this material covers")
+    icon = models.CharField(max_length=50, default='menu_book', help_text="Material icon name")
+    estimated_read_minutes = models.IntegerField(default=15)
+    prerequisites = models.TextField(blank=True, default='', help_text="Prerequisite knowledge (one per line)")
+    learning_outcomes = models.TextField(blank=True, default='', help_text="Learning outcomes (one per line)")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"Study: {self.title}"
+
+    @property
+    def prerequisite_list(self):
+        return [p.strip() for p in self.prerequisites.split('\n') if p.strip()]
+
+    @property
+    def outcome_list(self):
+        return [o.strip() for o in self.learning_outcomes.split('\n') if o.strip()]
+
+    class Meta:
+        verbose_name_plural = 'Study Materials'
+
+
+class StudySection(models.Model):
+    """Individual section/chapter within a study material."""
+
+    SECTION_TYPES = [
+        ('theory', 'Theory'),
+        ('concept', 'Concept'),
+        ('architecture', 'Architecture'),
+        ('best_practice', 'Best Practice'),
+        ('hands_on', 'Hands-On Guide'),
+        ('reference', 'Reference'),
+    ]
+
+    material = models.ForeignKey(StudyMaterial, on_delete=models.CASCADE, related_name='sections')
+    order = models.IntegerField(default=0)
+    title = models.CharField(max_length=300)
+    section_type = models.CharField(max_length=20, choices=SECTION_TYPES, default='theory')
+    content = models.TextField(help_text="Main content in HTML/markdown")
+    code_example = models.TextField(blank=True, default='', help_text="Optional code snippet/CLI example")
+    code_language = models.CharField(max_length=30, blank=True, default='bash', help_text="Language for syntax highlighting")
+    tip = models.TextField(blank=True, default='', help_text="Pro tip or important note")
+    key_takeaway = models.TextField(blank=True, default='', help_text="Key takeaway summary")
+    icon = models.CharField(max_length=50, default='article', help_text="Material icon name")
+
+    def __str__(self):
+        return f"§{self.order}: {self.title}"
+
+    class Meta:
+        ordering = ['order']
+        unique_together = ['material', 'order']

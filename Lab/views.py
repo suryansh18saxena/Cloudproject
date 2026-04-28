@@ -8,7 +8,7 @@ from django.utils import timezone
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_POST
 from django_q.tasks import async_task
-from .models import Lab, LabSession, LabActivity, LabScore
+from .models import Lab, LabSession, LabActivity, LabScore, StudyMaterial
 from .validators import validate_lab_tasks, calculate_score
 from .tasks import provision_lab_task, destroy_lab_task
 
@@ -349,3 +349,33 @@ def _update_user_stats(user):
     profile.longest_streak = max(profile.longest_streak, profile.current_streak)
     profile.last_lab_date = today
     profile.save()
+
+
+@login_required
+def study_material_hub(request):
+    """List all available study materials."""
+    materials = StudyMaterial.objects.select_related('lab').all()
+    context = {
+        'materials': materials,
+    }
+    return render(request, 'lab/study_material_hub.html', context)
+
+
+@login_required
+def study_material_detail(request, slug):
+    """Show detailed study material for a specific lab."""
+    lab = get_object_or_404(Lab, slug=slug)
+    try:
+        material = lab.study_material
+    except StudyMaterial.DoesNotExist:
+        from django.http import Http404
+        raise Http404("Study material not found for this lab.")
+
+    sections = material.sections.all().order_by('order')
+
+    context = {
+        'lab': lab,
+        'material': material,
+        'sections': sections,
+    }
+    return render(request, 'lab/study_material_detail.html', context)

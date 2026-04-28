@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Lab, LabSession, LabActivity, LabScore
+from .models import Lab, LabSession, LabActivity, LabScore, StudyMaterial, StudySection
 
 
 @admin.register(Lab)
@@ -26,3 +26,22 @@ class LabActivityAdmin(admin.ModelAdmin):
 class LabScoreAdmin(admin.ModelAdmin):
     list_display = ['user', 'lab', 'passed_tasks', 'total_tasks', 'score_percentage', 'scored_at']
     list_filter = ['lab']
+
+
+class StudySectionInline(admin.StackedInline):
+    model = StudySection
+    extra = 1
+    ordering = ['order']
+
+
+@admin.register(StudyMaterial)
+class StudyMaterialAdmin(admin.ModelAdmin):
+    list_display = ['title', 'lab', 'estimated_read_minutes', 'updated_at']
+    list_filter = ['lab']
+    inlines = [StudySectionInline]
+
+
+@admin.register(StudySection)
+class StudySectionAdmin(admin.ModelAdmin):
+    list_display = ['title', 'material', 'order', 'section_type']
+    list_filter = ['section_type', 'material']
