@@ -79,6 +79,22 @@ def lab_detail(request, lab_id):
         user=request.user, lab=lab, status='active'
     ).first()
 
+    # If session exists but timer has expired, auto-clean it so user can start fresh
+    if active_session and active_session.is_expired:
+        # Stop the container
+        if active_session.container_id:
+            try:
+                client = _get_docker_client()
+                container = client.containers.get(active_session.container_id)
+                container.kill()
+                container.remove(force=True)
+            except Exception:
+                pass
+        active_session.status = 'expired'
+        active_session.ended_at = timezone.now()
+        active_session.save()
+        active_session = None  # Allow starting a new session
+
     # If there's an active session, get the current challenge data for page refresh
     current_challenge_json = 'null'
     if active_session:
@@ -338,15 +354,22 @@ def finish_lab(request):
     try:
         session_id = request.POST.get('session_id')
         session = get_object_or_404(
-            TerminalLabSession, id=session_id, user=request.user, status='active'
+            TerminalLabSession, id=session_id, user=request.user
         )
+
+        # Allow finishing active or expired sessions (timer expiry triggers this)
+        if session.status not in ('active', 'expired'):
+            return JsonResponse({
+                'status': 'error',
+                'message': 'This lab session has already been completed.'
+            })
 
         # Stop and remove Docker container
         if session.container_id:
             try:
                 client = _get_docker_client()
                 container = client.containers.get(session.container_id)
-                container.kill()  # Force kill — faster than stop
+                container.kill()  # Force kill - faster than stop
                 container.remove(force=True)
             except docker.errors.NotFound:
                 pass  # Container already gone
