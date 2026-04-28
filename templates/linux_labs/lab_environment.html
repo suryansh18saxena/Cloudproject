@@ -590,14 +590,21 @@
       const timerDisplay = document.getElementById('timer-display');
       const timerPill = document.getElementById('timer-pill');
 
+      // If already expired (e.g. page reload after expiry), handle immediately
+      if (remaining <= 0) {
+        timerDisplay.textContent = '00:00';
+        timerPill.className = 'timer-pill danger';
+        handleTimerExpiry();
+        return;
+      }
+
       timerInterval = setInterval(() => {
         remaining--;
         if (remaining <= 0) {
           clearInterval(timerInterval);
           timerDisplay.textContent = '00:00';
           timerPill.className = 'timer-pill danger';
-          alert('⏱️ Time is up! Lab session has expired.');
-          window.location.href = "{% url 'linux_labs_hub' %}";
+          handleTimerExpiry();
           return;
         }
 
@@ -611,6 +618,39 @@
           timerPill.className = 'timer-pill warning';
         }
       }, 1000);
+    }
+
+    // Handle timer expiry: auto-finish the lab and show results
+    function handleTimerExpiry() {
+      // Disable all action buttons
+      document.querySelectorAll('.action-bar .btn').forEach(b => { b.disabled = true; });
+
+      // Close WebSocket
+      if (ws) { ws.onclose = null; ws.close(); ws = null; }
+
+      if (!sessionId) return;
+
+      // Call finish endpoint to save score and stop container
+      const formData = new FormData();
+      formData.append('csrfmiddlewaretoken', csrfToken);
+      formData.append('session_id', sessionId);
+
+      fetch('/linux-labs/finish/', { method: 'POST', body: formData })
+        .then(r => r.json())
+        .then(data => {
+          if (data.status === 'success') {
+            showResults(data);
+          } else {
+            // Session might already be expired/completed on server side
+            // Try to show whatever score we have
+            alert('⏱️ Time is up! Your session has ended.');
+            window.location.href = "{% url 'linux_labs_hub' %}";
+          }
+        })
+        .catch(() => {
+          alert('⏱️ Time is up! Your session has ended.');
+          window.location.href = "{% url 'linux_labs_hub' %}";
+        });
     }
 
     // ═══════════════════════════════════════════════════
