@@ -1,0 +1,53 @@
+name: Deploy CloudLabX to EC2
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    name: Deploy to EC2
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. Checkout code
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # 2. Deploy via SSH
+      - name: Deploy to EC2
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            set -e   # Exit immediately if any command fails
+
+            echo "=== Pulling latest code ==="
+            cd /home/ubuntu/Cloudproject
+            git pull origin main
+
+            echo "=== Activating virtual environment ==="
+            source .venv/bin/activate
+
+            echo "=== Installing/updating dependencies ==="
+            pip install -r requirements.txt
+
+            echo "=== Running database migrations ==="
+            python manage.py migrate --noinput
+
+            echo "=== Collecting static files ==="
+            python manage.py collectstatic --noinput
+
+            echo "=== Restarting Daphne ==="
+            sudo systemctl restart daphne
+
+            echo "=== Restarting Django-Q Worker ==="
+            sudo systemctl restart django-q
+
+            echo "=== Reloading Nginx ==="
+            sudo systemctl reload nginx
+
+            echo "=== Deployment complete! ==="
