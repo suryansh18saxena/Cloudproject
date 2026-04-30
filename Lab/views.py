@@ -1,4 +1,5 @@
 import os
+import threading
 from datetime import timedelta
 
 from django.shortcuts import render, get_object_or_404
@@ -7,7 +8,6 @@ from django.conf import settings
 from django.utils import timezone
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_POST
-from django_q.tasks import async_task
 from .models import Lab, LabSession, LabActivity, LabScore, StudyMaterial
 from .validators import validate_lab_tasks, calculate_score
 from .tasks import provision_lab_task, destroy_lab_task
@@ -69,6 +69,7 @@ def start_lab(request, slug):
 
         if existing:
             if existing.status == 'active' and not existing.is_expired:
+                # Genuinely running — hand back credentials
                 return JsonResponse({
                     'status': 'success',
                     'message': 'Lab already active.',
@@ -80,6 +81,12 @@ def start_lab(request, slug):
                     'timer_expires_at': existing.timer_expires_at.isoformat() if existing.timer_expires_at else None,
                     'session_id': existing.id,
                 })
+            elif existing.status == 'provisioning':
+                # Stuck provisioning session — abandon it so we can start fresh
+                existing.status = 'ended'
+                existing.terraform_state = 'error'
+                existing.ended_at = timezone.now()
+                existing.save()
             elif existing.is_expired:
                 existing.status = 'expired'
                 existing.ended_at = timezone.now()
@@ -95,8 +102,9 @@ def start_lab(request, slug):
         
         tf_dir = get_tf_dir(lab)
         
-        # Enqueue background task
-        async_task(provision_lab_task, session.id, tf_dir)
+        # Run in a background thread (no qcluster worker needed)
+        t = threading.Thread(target=provision_lab_task, args=(session.id, tf_dir), daemon=True)
+        t.start()
 
         return JsonResponse({
             'status': 'provisioning',
@@ -290,9 +298,10 @@ def end_lab(request, slug):
         session.terraform_state = 'destroying'
         session.save()
 
-        # Enqueue Terraform Destroy background task
+        # Run Terraform Destroy in a background thread
         tf_dir = get_tf_dir(lab)
-        async_task(destroy_lab_task, session.id, tf_dir)
+        t = threading.Thread(target=destroy_lab_task, args=(session.id, tf_dir), daemon=True)
+        t.start()
 
         # Get final score for response
         final_score = None

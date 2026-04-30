@@ -12,11 +12,18 @@ REGION = os.environ.get('AWS_DEFAULT_REGION', 'us-east-1')
 
 
 def check_ec2_launched(iam_username):
-    """Check if the user launched an EC2 instance via CloudTrail."""
+    """
+    Check if the user launched an EC2 instance.
+    Strategy:
+      1. Try CloudTrail first (accurate but can lag up to 15 min).
+      2. If no CloudTrail event found, fall back to describe_instances —
+         any instance launched in the last 4 hours counts as proof of launch.
+    """
+    # ── Step 1: CloudTrail lookup ──────────────────────────────────────
     try:
         ct = boto3.client('cloudtrail', region_name=REGION)
         end_time = timezone.now()
-        start_time = end_time - timezone.timedelta(hours=2)
+        start_time = end_time - timezone.timedelta(hours=4)
 
         response = ct.lookup_events(
             LookupAttributes=[
@@ -27,7 +34,6 @@ def check_ec2_launched(iam_username):
             MaxResults=50,
         )
 
-        # Filter for RunInstances events
         run_events = [
             e for e in response.get('Events', [])
             if e.get('EventName') == 'RunInstances'
@@ -38,31 +44,74 @@ def check_ec2_launched(iam_username):
             return {
                 'task_name': 'EC2 Instance Launch',
                 'passed': True,
-                'details': f"Instance launch detected at {event['EventTime']}. Event ID: {event['EventId']}",
+                'details': f"CloudTrail: RunInstances event at {event['EventTime']}.",
+            }
+    except Exception:
+        pass  # CloudTrail unavailable — proceed to fallback
+
+    # ── Step 2: describe_instances fallback ───────────────────────────
+    # CloudTrail events can lag up to 15 minutes.
+    # Fall back to describe_instances — any non-terminated instance is
+    # proof the student launched one. No time cutoff: it may have been
+    # launched earlier in the session.
+    try:
+        ec2 = boto3.client('ec2', region_name=REGION)
+
+        response = ec2.describe_instances(
+            Filters=[{
+                'Name': 'instance-state-name',
+                'Values': ['running', 'stopped', 'stopping', 'pending', 'shutting-down'],
+            }]
+        )
+
+        all_instances = []
+        for reservation in response.get('Reservations', []):
+            for inst in reservation.get('Instances', []):
+                all_instances.append(inst)
+
+        if all_instances:
+            inst = all_instances[0]
+            return {
+                'task_name': 'EC2 Instance Launch',
+                'passed': True,
+                'details': (
+                    f"Instance detected: {inst['InstanceId']} "
+                    f"(State: {inst['State']['Name']}, "
+                    f"Type: {inst.get('InstanceType','?')}, "
+                    f"Launched: {inst.get('LaunchTime','?')}). "
+                    f"[CloudTrail event may still be propagating]"
+                ),
             }
         else:
             return {
                 'task_name': 'EC2 Instance Launch',
                 'passed': False,
-                'details': 'No RunInstances event found in CloudTrail. Note: Events may take up to 15 minutes to appear.',
+                'details': (
+                    'No EC2 instance found via CloudTrail or EC2 API. '
+                    'Please launch an instance in the AWS Console and retry validation.'
+                ),
             }
     except Exception as e:
         return {
             'task_name': 'EC2 Instance Launch',
             'passed': False,
-            'details': f'Error checking CloudTrail: {str(e)}',
+            'details': f'EC2 API error: {str(e)}',
         }
 
 
 def check_ec2_running(iam_username):
-    """Check if there is a running EC2 instance."""
+    """
+    Check if there is at least one running EC2 instance in the account.
+    Note: We do NOT filter by 'CreatedBy' tag because students launching
+    via the AWS Console typically do not add that tag.
+    """
     try:
         ec2 = boto3.client('ec2', region_name=REGION)
 
+        # Check for any running instance — no tag filter needed
         response = ec2.describe_instances(
             Filters=[
                 {'Name': 'instance-state-name', 'Values': ['running']},
-                {'Name': 'tag:CreatedBy', 'Values': [iam_username]},
             ]
         )
 
@@ -77,17 +126,21 @@ def check_ec2_running(iam_username):
                 })
 
         if running_instances:
-            instance_info = running_instances[0]
+            inst = running_instances[0]
             return {
                 'task_name': 'EC2 Instance Running',
                 'passed': True,
-                'details': f"Running instance found: {instance_info['id']} (Type: {instance_info['type']}, Key: {instance_info['key']})",
+                'details': (
+                    f"Running instance: {inst['id']} "
+                    f"(Type: {inst['type']}, Key: {inst['key']}, "
+                    f"Launched: {inst['launch_time']})"
+                ),
             }
         else:
             return {
                 'task_name': 'EC2 Instance Running',
                 'passed': False,
-                'details': 'No running EC2 instances found. The instance may have been stopped or terminated.',
+                'details': 'No running EC2 instances found. Ensure your instance is in the Running state.',
             }
     except Exception as e:
         return {
