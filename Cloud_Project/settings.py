@@ -30,6 +30,7 @@ DEBUG = False
 
 ALLOWED_HOSTS = ['codex-div.xyz', 'www.codex-div.xyz', '18.232.26.115']
 
+STATIC_ROOT = BASE_DIR / 'staticfiles'
 # Application definition
 
 INSTALLED_APPS = [
@@ -149,7 +150,7 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 
-STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
