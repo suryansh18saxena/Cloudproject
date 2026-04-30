@@ -1200,16 +1200,10 @@
       cursor: pointer
     }
 
-    /* REVEAL ANIMATIONS */
+    /* REVEAL ANIMATIONS (DISABLED TO FIX RENDERING BUGS) */
     .reveal {
-      opacity: 0;
-      transform: translateY(40px);
-      transition: all .8s cubic-bezier(.4, 0, .2, 1)
-    }
-
-    .reveal.active {
       opacity: 1;
-      transform: translateY(0)
+      transform: translateY(0);
     }
 
     /* RESPONSIVE */
@@ -1319,12 +1313,14 @@
         <a href="#hero">Home</a>
         <a href="#features">Features</a>
         <a href="#labs">Labs</a>
-        <a href="#pricing">Pricing</a>
-        <a href="#about">About</a>
       </div>
       <div class="nav-cta">
-        <button class="btn-ghost">Login</button>
-        <button class="btn-primary">Sign Up Free</button>
+        {% if user.is_authenticated %}
+        <a href="{% url 'dashboard' %}"><button class="btn-primary">Dashboard</button></a>
+        {% else %}
+        <a href="{% url 'login' %}"><button class="btn-ghost">Login</button></a>
+        <a href="{% url 'signup' %}"><button class="btn-primary">Sign Up Free</button></a>
+        {% endif %}
       </div>
       <button class="mobile-toggle"><i class="fas fa-bars"></i></button>
     </div>
@@ -1340,8 +1336,8 @@
           required — ever.</p>
         <div class="hero-actions">
           <a href="{% url 'dashboard' %}">
-          <button class="btn-hero" onclick="document.getElementById('labs').scrollIntoView({behavior:'smooth'})">🚀
-            Start Learning Free</button></a>
+            <button class="btn-hero" onclick="document.getElementById('labs').scrollIntoView({behavior:'smooth'})">🚀
+              Start Learning Free</button></a>
           <button class="btn-secondary"
             onclick="document.getElementById('features').scrollIntoView({behavior:'smooth'})">Explore Labs →</button>
         </div>
@@ -1620,11 +1616,11 @@
     // Navbar scroll
     window.addEventListener('scroll', () => { document.getElementById('navbar').classList.toggle('scrolled', window.scrollY > 50) });
 
-    // GSAP Scroll Reveals
-    gsap.registerPlugin(ScrollTrigger);
-    document.querySelectorAll('.reveal').forEach(el => {
-      gsap.fromTo(el, { opacity: 0, y: 50 }, { opacity: 1, y: 0, duration: 1, ease: 'power3.out', scrollTrigger: { trigger: el, start: 'top 85%', toggleActions: 'play none none none' } });
-    });
+    // GSAP Scroll Reveals (Disabled to fix layout bug)
+    // gsap.registerPlugin(ScrollTrigger);
+    // document.querySelectorAll('.reveal').forEach(el => {
+    //   gsap.fromTo(el, { opacity: 0, y: 50 }, { opacity: 1, y: 0, duration: 1, ease: 'power3.out', scrollTrigger: { trigger: el, start: 'top 85%', toggleActions: 'play none none none' } });
+    // });
 
     // Animate progress bars on scroll
     gsap.utils.toArray('.progress-fill,.skill-item-fill').forEach(bar => {

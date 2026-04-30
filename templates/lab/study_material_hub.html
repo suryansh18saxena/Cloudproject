@@ -1,482 +1,107 @@
-<!DOCTYPE html>
-<html lang="en">
+{% extends 'base.html' %}
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CloudLabX — Study Materials</title>
-    <meta name="description" content="Comprehensive study materials for AWS cloud labs — learn theory before hands-on practice.">
-    <link
-        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap"
-        rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
-        rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+{% block title %}CloudLabX — Study Materials{% endblock %}
+{% block meta_description %}Comprehensive study materials for AWS cloud labs — learn theory before hands-on practice.{% endblock %}
+{% block nav_study %}active{% endblock %}
+{% block mobnav_study %}active{% endblock %}
 
-        :root {
-            --bg: #06080f;
-            --bg2: #0b1120;
-            --surface: #111827;
-            --surface2: #1a2438;
-            --surface3: #1e293b;
-            --primary: #7dd3fc;
-            --primary-dim: #38bdf8;
-            --primary-glow: rgba(125, 211, 252, 0.15);
-            --accent: #c084fc;
-            --accent2: #f472b6;
-            --text: #e2e8f0;
-            --text-dim: #94a3b8;
-            --text-muted: #64748b;
-            --border: rgba(125, 211, 252, 0.08);
-            --border-hover: rgba(125, 211, 252, 0.2);
-            --glass2: rgba(26, 36, 56, 0.65);
-            --green: #22c55e;
-            --red: #ef4444;
-            --amber: #f59e0b;
-            --purple: #a855f7;
-        }
+{% block topbar_content %}
+<span class="material-symbols-outlined" style="color:var(--primary)">menu_book</span>Study Materials
+{% endblock %}
 
-        html {
-            scroll-behavior: smooth;
-        }
+{% block topbar_actions %}
+<a class="action-btn" href="{% url 'dashboard' %}" title="Dashboard"><span class="material-symbols-outlined">home</span></a>
+{% endblock %}
 
-        body {
-            font-family: 'Inter', sans-serif;
-            background: var(--bg);
-            color: var(--text);
-            min-height: 100vh;
-            overflow-x: hidden;
-            line-height: 1.6;
-        }
+{% block extra_css %}
+/* Hero Banner */
+.hero-banner{background:linear-gradient(135deg,rgba(125,211,252,0.1),rgba(192,132,252,0.06));border:1px solid var(--border);border-radius:24px;padding:3rem;margin-bottom:2.5rem;position:relative;overflow:hidden;text-align:center}
+.hero-banner::before{content:'';position:absolute;top:-60%;right:-15%;width:400px;height:400px;border-radius:50%;background:radial-gradient(circle,rgba(192,132,252,0.12),transparent 70%);pointer-events:none}
+.hero-banner::after{content:'';position:absolute;bottom:-40%;left:-10%;width:300px;height:300px;border-radius:50%;background:radial-gradient(circle,rgba(125,211,252,0.08),transparent 70%);pointer-events:none}
+.hero-icon{width:72px;height:72px;border-radius:20px;background:linear-gradient(135deg,var(--primary),var(--accent));display:inline-flex;align-items:center;justify-content:center;margin-bottom:1.5rem;box-shadow:0 8px 30px var(--primary-glow)}
+.hero-icon .material-symbols-outlined{font-size:2rem;color:var(--bg)}
+.hero-banner h1{font-size:2.2rem;font-weight:900;letter-spacing:-1px;margin-bottom:.5rem;position:relative}
+.hero-banner h1 .gradient{background:linear-gradient(135deg,var(--primary),var(--accent));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.hero-banner p{color:var(--text-dim);font-size:1rem;max-width:600px;margin:0 auto;position:relative}
+.stats-row{display:flex;justify-content:center;gap:2rem;margin-top:1.5rem;position:relative;flex-wrap:wrap}
+.stat-chip{display:flex;align-items:center;gap:.5rem;background:rgba(125,211,252,0.06);border:1px solid var(--border);border-radius:12px;padding:.5rem 1.2rem;font-size:.8rem;font-weight:600;color:var(--text-dim)}
+.stat-chip .material-symbols-outlined{font-size:1rem;color:var(--primary)}
+/* Materials Grid */
+.materials-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:1.5rem}
+.material-card{background:var(--glass2);backdrop-filter:blur(15px);border:1px solid var(--border);border-radius:20px;padding:2rem;transition:all .4s cubic-bezier(.4,0,.2,1);cursor:default;position:relative;overflow:hidden;display:flex;flex-direction:column}
+.material-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--primary),var(--accent));opacity:0;transition:opacity .3s}
+.material-card:hover{border-color:var(--border-hover);transform:translateY(-4px);box-shadow:0 16px 40px rgba(0,0,0,.4)}
+.material-card:hover::before{opacity:1}
+.card-icon-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:1.2rem}
+.card-icon{width:48px;height:48px;border-radius:14px;background:linear-gradient(135deg,rgba(125,211,252,0.12),rgba(192,132,252,0.08));display:flex;align-items:center;justify-content:center}
+.card-icon .material-symbols-outlined{font-size:1.4rem;color:var(--primary)}
+.difficulty-badge{display:inline-block;padding:3px 10px;border-radius:8px;font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:1px}
+.difficulty-badge.beginner{background:rgba(34,197,94,0.1);color:var(--green)}
+.difficulty-badge.intermediate{background:rgba(168,85,247,0.1);color:var(--purple)}
+.difficulty-badge.advanced{background:rgba(239,68,68,0.1);color:var(--red)}
+.material-card h3{font-size:1.15rem;font-weight:700;margin-bottom:.5rem;line-height:1.3}
+.material-card .overview{font-size:.85rem;color:var(--text-dim);line-height:1.6;flex:1;margin-bottom:1.2rem}
+.card-meta{display:flex;gap:1rem;padding-top:.75rem;border-top:1px solid var(--border);margin-bottom:1rem}
+.card-meta span{display:flex;align-items:center;gap:.3rem;font-size:.75rem;color:var(--text-muted)}
+.card-meta .material-symbols-outlined{font-size:.85rem}
+.card-actions{display:flex;gap:.75rem}
+.btn-read{flex:1;background:linear-gradient(135deg,var(--primary),var(--primary-dim));color:var(--bg);border:none;padding:.7rem 1.2rem;border-radius:12px;font-weight:700;font-size:.82rem;cursor:pointer;transition:all .3s;display:flex;align-items:center;justify-content:center;gap:.4rem;text-decoration:none;font-family:'Inter',sans-serif}
+.btn-read:hover{box-shadow:0 8px 25px var(--primary-glow);transform:translateY(-2px)}
+.btn-lab{background:rgba(125,211,252,0.08);border:1px solid var(--border);color:var(--text-dim);padding:.7rem 1rem;border-radius:12px;font-weight:600;font-size:.82rem;cursor:pointer;transition:all .3s;display:flex;align-items:center;gap:.4rem;text-decoration:none;font-family:'Inter',sans-serif}
+.btn-lab:hover{border-color:var(--primary);color:var(--primary)}
+.empty-state{text-align:center;padding:4rem 2rem;color:var(--text-muted)}
+.empty-state .material-symbols-outlined{font-size:4rem;margin-bottom:1rem;opacity:.4;display:block}
+/* Animations */
+@keyframes fadeInUp{from{opacity:0;transform:translateY(25px)}to{opacity:1;transform:translateY(0)}}
+.animate-in{opacity:0;animation:fadeInUp .6s forwards}
+.animate-in:nth-child(1){animation-delay:.1s}.animate-in:nth-child(2){animation-delay:.2s}.animate-in:nth-child(3){animation-delay:.3s}.animate-in:nth-child(4){animation-delay:.4s}.animate-in:nth-child(5){animation-delay:.5s}.animate-in:nth-child(6){animation-delay:.6s}
+@media(max-width:768px){.hero-banner{padding:2rem 1.5rem}.hero-banner h1{font-size:1.5rem}.materials-grid{grid-template-columns:1fr}}
+{% endblock %}
 
-        ::selection {
-            background: var(--primary);
-            color: var(--bg);
-        }
-
-        ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-track { background: var(--bg); }
-        ::-webkit-scrollbar-thumb { background: var(--surface3); border-radius: 10px; }
-
-        /* Container */
-        .page-container {
-            max-width: 1100px;
-            margin: 0 auto;
-            padding: 2rem;
-        }
-
-        /* Back Link */
-        .back-link {
-            display: inline-flex;
-            align-items: center;
-            gap: .5rem;
-            color: var(--text-dim);
-            font-size: .85rem;
-            font-weight: 600;
-            text-decoration: none;
-            margin-bottom: 2rem;
-            transition: color .3s;
-        }
-
-        .back-link:hover {
-            color: var(--primary);
-        }
-
-        /* Hero Banner */
-        .hero-banner {
-            background: linear-gradient(135deg, rgba(125, 211, 252, 0.1), rgba(192, 132, 252, 0.06));
-            border: 1px solid var(--border);
-            border-radius: 24px;
-            padding: 3rem;
-            margin-bottom: 2.5rem;
-            position: relative;
-            overflow: hidden;
-            text-align: center;
-        }
-
-        .hero-banner::before {
-            content: '';
-            position: absolute;
-            top: -60%;
-            right: -15%;
-            width: 400px;
-            height: 400px;
-            border-radius: 50%;
-            background: radial-gradient(circle, rgba(192, 132, 252, 0.12), transparent 70%);
-            pointer-events: none;
-        }
-
-        .hero-banner::after {
-            content: '';
-            position: absolute;
-            bottom: -40%;
-            left: -10%;
-            width: 300px;
-            height: 300px;
-            border-radius: 50%;
-            background: radial-gradient(circle, rgba(125, 211, 252, 0.08), transparent 70%);
-            pointer-events: none;
-        }
-
-        .hero-icon {
-            width: 72px;
-            height: 72px;
-            border-radius: 20px;
-            background: linear-gradient(135deg, var(--primary), var(--accent));
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            margin-bottom: 1.5rem;
-            box-shadow: 0 8px 30px var(--primary-glow);
-        }
-
-        .hero-icon .material-symbols-outlined {
-            font-size: 2rem;
-            color: var(--bg);
-        }
-
-        .hero-banner h1 {
-            font-size: 2.2rem;
-            font-weight: 900;
-            letter-spacing: -1px;
-            margin-bottom: .5rem;
-            position: relative;
-        }
-
-        .hero-banner h1 .gradient {
-            background: linear-gradient(135deg, var(--primary), var(--accent));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-
-        .hero-banner p {
-            color: var(--text-dim);
-            font-size: 1rem;
-            max-width: 600px;
-            margin: 0 auto;
-            position: relative;
-        }
-
-        /* Stats Row */
-        .stats-row {
-            display: flex;
-            justify-content: center;
-            gap: 2rem;
-            margin-top: 1.5rem;
-            position: relative;
-        }
-
-        .stat-chip {
-            display: flex;
-            align-items: center;
-            gap: .5rem;
-            background: rgba(125, 211, 252, 0.06);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: .5rem 1.2rem;
-            font-size: .8rem;
-            font-weight: 600;
-            color: var(--text-dim);
-        }
-
-        .stat-chip .material-symbols-outlined {
-            font-size: 1rem;
-            color: var(--primary);
-        }
-
-        /* Materials Grid */
-        .materials-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-            gap: 1.5rem;
-        }
-
-        .material-card {
-            background: var(--glass2);
-            backdrop-filter: blur(15px);
-            border: 1px solid var(--border);
-            border-radius: 20px;
-            padding: 2rem;
-            transition: all .4s cubic-bezier(.4, 0, .2, 1);
-            cursor: default;
-            position: relative;
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .material-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 3px;
-            background: linear-gradient(90deg, var(--primary), var(--accent));
-            opacity: 0;
-            transition: opacity .3s;
-        }
-
-        .material-card:hover {
-            border-color: var(--border-hover);
-            transform: translateY(-4px);
-            box-shadow: 0 16px 40px rgba(0, 0, 0, .4);
-        }
-
-        .material-card:hover::before {
-            opacity: 1;
-        }
-
-        .card-icon-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1.2rem;
-        }
-
-        .card-icon {
-            width: 48px;
-            height: 48px;
-            border-radius: 14px;
-            background: linear-gradient(135deg, rgba(125, 211, 252, 0.12), rgba(192, 132, 252, 0.08));
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .card-icon .material-symbols-outlined {
-            font-size: 1.4rem;
-            color: var(--primary);
-        }
-
-        .difficulty-badge {
-            display: inline-block;
-            padding: 3px 10px;
-            border-radius: 8px;
-            font-size: .65rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-
-        .difficulty-badge.beginner {
-            background: rgba(34, 197, 94, 0.1);
-            color: var(--green);
-        }
-
-        .difficulty-badge.intermediate {
-            background: rgba(168, 85, 247, 0.1);
-            color: var(--purple);
-        }
-
-        .difficulty-badge.advanced {
-            background: rgba(239, 68, 68, 0.1);
-            color: var(--red);
-        }
-
-        .material-card h3 {
-            font-size: 1.15rem;
-            font-weight: 700;
-            margin-bottom: .5rem;
-            line-height: 1.3;
-        }
-
-        .material-card .overview {
-            font-size: .85rem;
-            color: var(--text-dim);
-            line-height: 1.6;
-            flex: 1;
-            margin-bottom: 1.2rem;
-        }
-
-        .card-meta {
-            display: flex;
-            gap: 1rem;
-            padding-top: .75rem;
-            border-top: 1px solid var(--border);
-            margin-bottom: 1rem;
-        }
-
-        .card-meta span {
-            display: flex;
-            align-items: center;
-            gap: .3rem;
-            font-size: .75rem;
-            color: var(--text-muted);
-        }
-
-        .card-meta .material-symbols-outlined {
-            font-size: .85rem;
-        }
-
-        .card-actions {
-            display: flex;
-            gap: .75rem;
-        }
-
-        .btn-read {
-            flex: 1;
-            background: linear-gradient(135deg, var(--primary), var(--primary-dim));
-            color: var(--bg);
-            border: none;
-            padding: .7rem 1.2rem;
-            border-radius: 12px;
-            font-weight: 700;
-            font-size: .82rem;
-            cursor: pointer;
-            transition: all .3s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: .4rem;
-            text-decoration: none;
-            font-family: 'Inter', sans-serif;
-        }
-
-        .btn-read:hover {
-            box-shadow: 0 8px 25px var(--primary-glow);
-            transform: translateY(-2px);
-        }
-
-        .btn-lab {
-            background: rgba(125, 211, 252, 0.08);
-            border: 1px solid var(--border);
-            color: var(--text-dim);
-            padding: .7rem 1rem;
-            border-radius: 12px;
-            font-weight: 600;
-            font-size: .82rem;
-            cursor: pointer;
-            transition: all .3s;
-            display: flex;
-            align-items: center;
-            gap: .4rem;
-            text-decoration: none;
-            font-family: 'Inter', sans-serif;
-        }
-
-        .btn-lab:hover {
-            border-color: var(--primary);
-            color: var(--primary);
-        }
-
-        /* Empty State */
-        .empty-state {
-            text-align: center;
-            padding: 4rem 2rem;
-            color: var(--text-muted);
-        }
-
-        .empty-state .material-symbols-outlined {
-            font-size: 4rem;
-            margin-bottom: 1rem;
-            opacity: .4;
-        }
-
-        /* Animations */
-        @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(25px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .animate-in {
-            opacity: 0;
-            animation: fadeInUp .6s forwards;
-        }
-
-        .animate-in:nth-child(1) { animation-delay: .1s; }
-        .animate-in:nth-child(2) { animation-delay: .2s; }
-        .animate-in:nth-child(3) { animation-delay: .3s; }
-        .animate-in:nth-child(4) { animation-delay: .4s; }
-        .animate-in:nth-child(5) { animation-delay: .5s; }
-        .animate-in:nth-child(6) { animation-delay: .6s; }
-
-        /* Responsive */
-        @media (max-width: 768px) {
-            .page-container { padding: 1rem; }
-            .hero-banner { padding: 2rem 1.5rem; }
-            .hero-banner h1 { font-size: 1.5rem; }
-            .stats-row { flex-wrap: wrap; gap: .75rem; }
-            .materials-grid { grid-template-columns: 1fr; }
-        }
-    </style>
-</head>
-
-<body>
-    <div class="page-container">
-        <a href="{% url 'dashboard' %}" class="back-link">
-            <span class="material-symbols-outlined" style="font-size:1rem">arrow_back</span> Back to Dashboard
-        </a>
-
-        <!-- Hero Banner -->
-        <div class="hero-banner animate-in">
-            <div class="hero-icon">
-                <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1">menu_book</span>
-            </div>
-            <h1><span class="gradient">Study Materials</span></h1>
-            <p>Master cloud concepts with comprehensive study guides before jumping into hands-on labs. Read, understand, then practice.</p>
-            <div class="stats-row">
-                <div class="stat-chip">
-                    <span class="material-symbols-outlined">library_books</span>
-                    {{ materials|length }} Module{{ materials|length|pluralize }}
-                </div>
-                <div class="stat-chip">
-                    <span class="material-symbols-outlined">school</span>
-                    In-Depth Explanations
-                </div>
-                <div class="stat-chip">
-                    <span class="material-symbols-outlined">code</span>
-                    CLI Examples Included
-                </div>
-            </div>
-        </div>
-
-        <!-- Materials Grid -->
-        <div class="materials-grid">
-            {% for material in materials %}
-            <div class="material-card animate-in">
-                <div class="card-icon-row">
-                    <div class="card-icon">
-                        <span class="material-symbols-outlined">{{ material.icon }}</span>
-                    </div>
-                    <span class="difficulty-badge {{ material.lab.difficulty }}">{{ material.lab.get_difficulty_display }}</span>
-                </div>
-                <h3>{{ material.title }}</h3>
-                <p class="overview">{{ material.overview|truncatewords:30 }}</p>
-                <div class="card-meta">
-                    <span><span class="material-symbols-outlined">schedule</span> {{ material.estimated_read_minutes }} min read</span>
-                    <span><span class="material-symbols-outlined">format_list_numbered</span> {{ material.sections.count }} sections</span>
-                </div>
-                <div class="card-actions">
-                    <a href="{% url 'study_material_detail' slug=material.lab.slug %}" class="btn-read">
-                        <span class="material-symbols-outlined" style="font-size:1rem">auto_stories</span> Read Material
-                    </a>
-                    <a href="{% url 'lab_detail' slug=material.lab.slug %}" class="btn-lab">
-                        <span class="material-symbols-outlined" style="font-size:1rem">science</span> Lab
-                    </a>
-                </div>
-            </div>
-            {% empty %}
-            <div class="empty-state" style="grid-column: 1 / -1;">
-                <span class="material-symbols-outlined">menu_book</span>
-                <h3>No Study Materials Yet</h3>
-                <p style="margin-top:.5rem">Study materials are being prepared. Check back soon!</p>
-            </div>
-            {% endfor %}
-        </div>
+{% block content %}
+  <!-- Hero Banner -->
+  <div class="hero-banner animate-in">
+    <div class="hero-icon">
+      <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1">menu_book</span>
     </div>
-</body>
+    <h1><span class="gradient">Study Materials</span></h1>
+    <p>Master cloud concepts with comprehensive study guides before jumping into hands-on labs. Read, understand, then practice.</p>
+    <div class="stats-row">
+      <div class="stat-chip"><span class="material-symbols-outlined">library_books</span> {{ materials|length }} Module{{ materials|length|pluralize }}</div>
+      <div class="stat-chip"><span class="material-symbols-outlined">school</span> In-Depth Explanations</div>
+      <div class="stat-chip"><span class="material-symbols-outlined">code</span> CLI Examples Included</div>
+    </div>
+  </div>
 
-</html>
+  <!-- Materials Grid -->
+  <div class="materials-grid">
+    {% for material in materials %}
+    <div class="material-card animate-in">
+      <div class="card-icon-row">
+        <div class="card-icon"><span class="material-symbols-outlined">{{ material.icon }}</span></div>
+        <span class="difficulty-badge {{ material.lab.difficulty }}">{{ material.lab.get_difficulty_display }}</span>
+      </div>
+      <h3>{{ material.title }}</h3>
+      <p class="overview">{{ material.overview|truncatewords:30 }}</p>
+      <div class="card-meta">
+        <span><span class="material-symbols-outlined">schedule</span> {{ material.estimated_read_minutes }} min read</span>
+        <span><span class="material-symbols-outlined">format_list_numbered</span> {{ material.sections.count }} sections</span>
+      </div>
+      <div class="card-actions">
+        <a href="{% url 'study_material_detail' slug=material.lab.slug %}" class="btn-read">
+          <span class="material-symbols-outlined" style="font-size:1rem">auto_stories</span> Read Material
+        </a>
+        <a href="{% url 'lab_detail' slug=material.lab.slug %}" class="btn-lab">
+          <span class="material-symbols-outlined" style="font-size:1rem">science</span> Lab
+        </a>
+      </div>
+    </div>
+    {% empty %}
+    <div class="empty-state" style="grid-column:1/-1">
+      <span class="material-symbols-outlined">menu_book</span>
+      <h3>No Study Materials Yet</h3>
+      <p style="margin-top:.5rem">Study materials are being prepared. Check back soon!</p>
+    </div>
+    {% endfor %}
+  </div>
+{% endblock %}
