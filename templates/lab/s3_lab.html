@@ -414,7 +414,7 @@
             align-items: center;
             justify-content: center;
             gap: .5rem;
-            width: 100;
+            width: 100%;
             font-family: 'Inter', sans-serif;
         }
 
@@ -597,6 +597,15 @@
             }
         }
 
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to   { transform: rotate(360deg); }
+        }
+        .spinning {
+            display: inline-block;
+            animation: spin 1s linear infinite;
+        }
+
         /* Hidden */
         .hidden {
             display: none !important;
@@ -742,10 +751,25 @@
                 <button class="btn btn-submit hidden" id="submit-btn" onclick="submitLab()" style="margin-top:.75rem">
                     <span class="material-symbols-outlined" style="font-size:1.1rem">check_circle</span> Submit Lab
                 </button>
-                <button class="btn btn-end hidden" id="end-btn" onclick="endLab()" style="margin-top:.75rem">
-                    <span class="material-symbols-outlined" style="font-size:1.1rem">stop_circle</span> End Lab &
-                    Cleanup
+                <button class="btn btn-end hidden" id="end-btn" onclick="showEndConfirm()" style="margin-top:.75rem">
+                    <span class="material-symbols-outlined" style="font-size:1.1rem">stop_circle</span> End Lab &amp; Cleanup
                 </button>
+            </div>
+
+            <!-- End Lab Inline Confirm Card -->
+            <div class="control-card hidden" id="end-confirm-card" style="border:1px solid rgba(239,68,68,0.3);background:rgba(239,68,68,0.05)">
+                <p style="font-size:.85rem;color:#fca5a5;margin-bottom:1rem;line-height:1.5">
+                    <span class="material-symbols-outlined" style="font-size:1rem;vertical-align:middle;color:#ef4444">warning</span>
+                    <strong>This will destroy all AWS resources</strong> created in this session (S3 bucket, IAM user, etc.).
+                </p>
+                <div style="display:flex;gap:.6rem">
+                    <button class="btn" onclick="endLab()" style="background:linear-gradient(135deg,#ef4444,#dc2626);color:#fff;flex:1;font-size:.82rem">
+                        <span class="material-symbols-outlined" style="font-size:.95rem">delete_forever</span> Yes, End &amp; Destroy
+                    </button>
+                    <button class="btn" onclick="hideEndConfirm()" style="background:rgba(255,255,255,.05);border:1px solid var(--border);color:var(--text-dim);flex:1;font-size:.82rem">
+                        Cancel
+                    </button>
+                </div>
             </div>
 
             <!-- Score Result Card (shown after submit) -->
@@ -1019,57 +1043,100 @@
                     <div class="score-details">${tasksHtml}</div>
                 </div>`;
 
-            card.classList.remove('hidden');
-        }
-
+  
         async function endLab() {
-            if (!confirm('Are you sure you want to end the lab? This will destroy ALL AWS resources.')) return;
+            console.log('[EndLab] endLab() called — starting destroy');
 
-            const btn = document.getElementById('end-btn');
-            btn.textContent = '⏳ Cleaning up...';
-            btn.disabled = true;
+            const confirmCard = document.getElementById('end-confirm-card');
+            if (confirmCard) confirmCard.classList.add('hidden');
 
-            document.getElementById('submit-btn').disabled = true;
+            const btn    = document.getElementById('end-btn');
+            const subBtn = document.getElementById('submit-btn');
+            btn.innerHTML = '<span class="material-symbols-outlined spinning">sync</span> Ending Lab...';
+            btn.disabled  = true;
+            btn.classList.remove('hidden');
+            if (subBtn) subBtn.disabled = true;
+            updateStatus('\ud83e\uddf9 Ending lab and cleaning up AWS resources...');
 
-            updateStatus('🧹 Running cleanup + terraform destroy...');
+            const url  = '/Lab/{{ lab.slug }}/end/';
+            const csrf = getCookie('csrftoken');
+            console.log('[EndLab] POST to:', url, '| CSRF:', csrf ? 'found' : 'MISSING');
 
             try {
-                const response = await fetch('/Lab/{{ lab.slug }}/end/', {
-                    method: 'POST',
-                    headers: { 'X-CSRFToken': getCookie('csrftoken') }
+                const response = await fetch(url, {
+                    method : 'POST',
+                    headers: {
+                        'X-CSRFToken'     : csrf || '',
+                        'X-Requested-With': 'XMLHttpRequest',
+                    },
                 });
+                console.log('[EndLab] HTTP status:', response.status);
+
+                if (!response.ok) {
+                    const text = await response.text();
+                    console.error('[EndLab] Non-OK response:', text);
+                    throw new Error('Server returned ' + response.status);
+                }
+
                 const data = await response.json();
+                console.log('[EndLab] Response:', data);
 
                 if (data.status === 'destroying') {
                     if (timerInterval) clearInterval(timerInterval);
-                    updateStatus('🧹 Resources are being destroyed in background. Please wait...');
-                    checkCurrentLabStatus();
+                    btn.innerHTML = '<span class="material-symbols-outlined spinning">sync</span> Destroying...';
+                    if (data.score) showScore({ score: data.score, tasks: [] });
+                    updateStatus('\ud83e\uddf9 Resources being destroyed in background \u2014 page will update automatically...');
+                    setTimeout(checkCurrentLabStatus, 5000);
+
                 } else if (data.status === 'success') {
                     if (timerInterval) clearInterval(timerInterval);
                     if (data.score) showScore({ score: data.score, tasks: [] });
-
-                    updateStatus('Ready to start!');
                     document.getElementById('timer-card').classList.add('hidden');
                     document.getElementById('cred-card').classList.add('hidden');
-                    document.getElementById('submit-btn').classList.add('hidden');
+                    if (subBtn) subBtn.classList.add('hidden');
                     btn.classList.add('hidden');
-
                     const startBtn = document.getElementById('start-btn');
                     startBtn.innerHTML = '<span class="material-symbols-outlined" style="font-size:1.1rem">play_arrow</span> Start Lab';
-                    startBtn.disabled = false;
+                    startBtn.disabled  = false;
                     startBtn.classList.remove('hidden');
+                    updateStatus('\u2705 Lab ended. Resources destroyed. Ready to start again!');
+
+                } else if (data.status === 'error' && data.message === 'No lab session to end.') {
+                    if (timerInterval) clearInterval(timerInterval);
+                    document.getElementById('timer-card').classList.add('hidden');
+                    document.getElementById('cred-card').classList.add('hidden');
+                    if (subBtn) subBtn.classList.add('hidden');
+                    btn.classList.add('hidden');
+                    const startBtn = document.getElementById('start-btn');
+                    startBtn.innerHTML = '<span class="material-symbols-outlined" style="font-size:1.1rem">play_arrow</span> Start Lab';
+                    startBtn.disabled  = false;
+                    startBtn.classList.remove('hidden');
+                    updateStatus('\u2705 Session already ended. Ready to start a new lab!');
+
                 } else {
-                    alert('Error: ' + data.message);
+                    alert('Error: ' + (data.message || 'Unknown error'));
                     btn.innerHTML = '<span class="material-symbols-outlined" style="font-size:1.1rem">stop_circle</span> End Lab & Cleanup';
-                    btn.disabled = false;
-                    document.getElementById('submit-btn').disabled = false;
+                    btn.disabled  = false;
+                    if (subBtn) subBtn.disabled = false;
+                    updateStatus('\u274c Error: ' + (data.message || 'Please try again.'));
                 }
-            } catch (error) {
-                alert('Network Error: ' + error.message);
+
+            } catch (err) {
+                console.error('[EndLab] Exception:', err);
+                alert('Network/Server Error: ' + err.message);
                 btn.innerHTML = '<span class="material-symbols-outlined" style="font-size:1.1rem">stop_circle</span> End Lab & Cleanup';
-                btn.disabled = false;
-                document.getElementById('submit-btn').disabled = false;
+                btn.disabled  = false;
+                if (subBtn) subBtn.disabled = false;
+                updateStatus('\u274c Network error. Check console (F12) and try again.');
             }
+        }
+
+        function showEndConfirm() {
+            document.getElementById('end-confirm-card').classList.remove('hidden');
+        }
+
+        function hideEndConfirm() {
+            document.getElementById('end-confirm-card').classList.add('hidden');
         }
     </script>
 </body>
