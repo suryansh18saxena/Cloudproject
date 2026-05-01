@@ -29,6 +29,8 @@ SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY')
 DEBUG = False
 
 ALLOWED_HOSTS = ['codex-div.xyz', 'www.codex-div.xyz', '18.232.26.115']
+CSRF_TRUSTED_ORIGINS = ['https://codex-div.xyz', 'https://www.codex-div.xyz']
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 # Application definition
